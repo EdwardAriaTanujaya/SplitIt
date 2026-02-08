@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
 :root {
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -6,6 +8,19 @@
 
   /* Colour */
   --fun-color-primary: #0234FC;
+  --fun-color-lightgray: #878787;
+  --fun-color-gray: #ECECEC;
+  --fun-color-error: #cc0000;
+
+  /* Font */
+  font-family: "Poppins", sans-serif;
+}
+
+@theme {
+  --color-primary: var(--fun-color-primary);
+  --color-lightgray: var(--fun-color-lightgray);
+  --color-gray: var(--fun-color-gray);
+  --color-error: var(--fun-color-error);
 }
 
 body {
@@ -14,11 +29,6 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-}
-
-/* Tailwind Colour */
-@theme {
-  --color-primary: var(--fun-color-primary);
 }
 
 /* Global reset and base styles */ 
