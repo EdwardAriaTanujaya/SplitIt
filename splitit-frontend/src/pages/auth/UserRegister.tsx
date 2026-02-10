@@ -2,6 +2,7 @@ import FormInput from "../../components/input/FormInput";
 import {UserRound, Mail, Lock} from 'lucide-react';
 import InputErrorMessage from "../../components/error/InputErrorMessage";
 import { useState } from "react";
+import PublicHeader from "../../components/header/PublicHeader";
 
 function UserRegister() {
 
@@ -28,12 +29,9 @@ function UserRegister() {
 
     return (
             <div className="h-screen w-screen bg-white">
-            <img src="/Logo.png" alt="Register" className="block mt-[15px] ml-[14px]"/>
+            <img src="/Logo.png" alt="Logo" className="block mt-[15px] ml-[14px]"/>
 
-            <div className="flex flex-col w-screen h-auto justify-center items-center mt-[10px]">
-                <h1 className="text-2xl font-bold">Create Account</h1>
-                <p className="text-xs font-normal text-[var(--color-lightgray)]">Join For Fun & Start Sharing</p>
-            </div>
+            <PublicHeader title="Create Account" subtitle="Join For Fun & Start Sharing" />
 
             <div className="flex flex-col w-screen h-auto mt-[15px]">
                 {/* Form Component */}

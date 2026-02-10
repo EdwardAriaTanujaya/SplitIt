@@ -1,6 +1,7 @@
 import FormInput from "../../components/input/FormInput";
 import {Mail, Lock} from 'lucide-react';
 import { useState } from 'react';
+import PublicHeader from "../../components/header/PublicHeader";
 
 function UserLogin (){
     const [email, setEmail] = useState('');
@@ -8,11 +9,10 @@ function UserLogin (){
 
     return (
         <div className="h-screen w-screen bg-white">
-            <img src="/Logo.png" alt="Register" className="block mt-[15px] ml-[14px]"/>
-            <div className="flex flex-col w-screen h-auto justify-center items-center mt-[10px]">
-                <h1 className="text-2xl font-bold">Welcome Back!</h1>
-                <p className="text-xs font-normal text-[var(--color-lightgray)]">Ready to split some bills?</p>
-            </div>
+            <img src="/Logo.png" alt="Logo" className="block mt-[15px] ml-[14px]"/>
+
+            <PublicHeader title="Welcome Back!" subtitle="Ready to split some bills?" />
+
             <div className="flex flex-col w-screen h-auto mt-[15px]">
                 {/* Form Component */}
                 <form className="flex flex-col w-[343px] h-auto mt-[20px] mx-auto">
