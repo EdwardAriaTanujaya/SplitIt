@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build" : "tsc",
+    "start": "nodemon src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -14,7 +16,7 @@
   "dependencies": {
     "@prisma/client": "^7.4.0",
     "express": "^5.2.1",
-    "prisma": "^6.19.2"
+    "prisma": "^7.4.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
