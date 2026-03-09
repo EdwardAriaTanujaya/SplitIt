@@ -15,7 +15,7 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
         email,
         password,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       //error handling
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 409) {
@@ -29,7 +29,7 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
 
   login: async (userEmail, password) => {
     // Fetching and storing token
-    await axios.post(
+    const res = await axios.post(
       `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
       {
         email: userEmail,
@@ -37,6 +37,9 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
       },
       { withCredentials: true }
     );
+    if (res.data?.user) {
+      set({ user: res.data.user });
+    }
   },
 
   fetchProfile: async () => {
@@ -50,7 +53,7 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
       const { user } = userRes.data;
       // console.log(user);
       set({ user });
-    } catch (error) {
+    } catch {
       set({ user: null }); // Not authenticated
     } finally {
       set({ authChecked: true });

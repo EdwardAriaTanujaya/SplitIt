@@ -2,10 +2,31 @@ import FormInput from "../../components/input/FormInput";
 import {Mail, Lock} from 'lucide-react';
 import { useState } from 'react';
 import PublicHeader from "../../components/header/PublicHeader";
+import useUserAuth from "../../store/UserAuthStore";
+import { useNavigate } from "react-router-dom";
 
 function UserLogin (){
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    
+    const login = useUserAuth((s) => s.login);
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            await login(email, password);
+            navigate("/expense");
+        } catch (err: any) {
+            setError(err.message || "Login failed. Please check your credentials.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="h-screen w-screen bg-white">
@@ -15,12 +36,21 @@ function UserLogin (){
 
             <div className="flex flex-col w-screen h-auto mt-[15px]">
                 {/* Form Component */}
-                <form className="flex flex-col w-[343px] h-auto mt-[20px] mx-auto">
+                <form onSubmit={handleSubmit} className="flex flex-col w-[343px] h-auto mt-[20px] mx-auto">
+                    {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
+                    
                     <p className="text-[var(--color-lightgray)] font-bold">EMAIL</p>
-                    <FormInput Icon={Mail} placeholder="Email" type="email" value={email} onChange={(email) => setEmail(email)}></FormInput>
+                    <FormInput Icon={Mail} placeholder="ex: johndoe@gmail.com" type="email" value={email} onChange={(val) => setEmail(val)}></FormInput>
+                    
                     <p className="mt-[17px] text-[var(--color-lightgray)] font-bold">PASSWORD</p>
-                    <FormInput Icon={Lock} placeholder="Password" type="password" value={password} onChange={(password) => setPassword(password)}></FormInput>
-                    <button className="text-white font-bold text-base mt-[20px] w-full h-10 bg-[var(--fun-color-primary)] rounded-lg flex justify-center items-center active:shadow-inner transition-all duration-100 brightness-100 active:brightness-90">Login</button>
+                    <FormInput Icon={Lock} placeholder="Create a strong password" type="password" value={password} onChange={(val) => setPassword(val)}></FormInput>
+                    
+                    <button 
+                        disabled={loading}
+                        className="text-white font-bold text-base mt-[20px] w-full h-10 bg-[var(--fun-color-primary)] rounded-lg flex justify-center items-center active:shadow-inner transition-all duration-100 brightness-100 active:brightness-90 disabled:opacity-50"
+                    >
+                        {loading ? "Logging in..." : "Login"}
+                    </button>
                 </form>
             </div>
             <div className="flex flex-col w-screen h-auto justify-center items-center">

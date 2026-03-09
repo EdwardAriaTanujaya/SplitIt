@@ -1,5 +1,15 @@
 {
+  "name": "splitit-root",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev-backend\" \"npm run dev-frontend\"",
+    "dev-backend": "cd splitit-backend && npm run start:dev",
+    "dev-frontend": "cd splitit-frontend && npm run dev",
+    "install-all": "npm install && cd splitit-backend && npm install && cd ../splitit-frontend && npm install",
+    "build-all": "cd splitit-backend && npm run build && cd ../splitit-frontend && npm run build"
+  },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "nodemon": "^3.1.11"
   }
 }

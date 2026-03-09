@@ -1,15 +1,41 @@
-import { UserRound, UsersRound} from "lucide-react";
-import { useState } from "react";
+import { UserRound, UsersRound, ChevronRight, X, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 import HeaderTagline from "../components/header/HeaderTagline";
-import FloatingButton from "../components/button/FloatingButton";
 import Header from "../components/header/Header";
+import useGroupStore from "../store/GroupStore";
+import useUserAuth from "../store/UserAuthStore";
 
 function ExpenseMain() {
   const [search, setSearch] = useState<string>("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  
+  const user = useUserAuth((s) => s.user);
+  const { groups, fetchGroups, createGroup, loading } = useGroupStore();
+
+  useEffect(() => {
+    if (user) {
+      fetchGroups(user.id);
+    }
+  }, [user, fetchGroups]);
+
+  const handleCreateGroup = async () => {
+    if (!newGroupName || !user) return;
+    try {
+        await createGroup(newGroupName, [], user.id); // Pass creatorId
+        setShowCreateModal(false);
+        setNewGroupName("");
+        fetchGroups(user.id);
+    } catch (error) {
+        console.error("Failed to create group", error);
+    }
+  };
+
+  const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="h-screen w-screen bg-white">
+    <div className="h-screen w-screen bg-white flex flex-col overflow-hidden">
       <Header />
 
       <HeaderTagline
@@ -18,55 +44,112 @@ function ExpenseMain() {
         onChange={setSearch}
         value={search}
         placeholder="Search groups"
-        />
+      />
 
-      {/* <div className="rounded-2xl shadow-lg bg-white w-[90%] max-w-[400px] h-[104px] ml-[14px] mt-[20px]">
-        <div className="flex flex-col mt-5 ml-5 w-full h-auto">
-          <div className="flex flex-row">
-            <div className="flex-1">
-              <div className="w-[43px] h-[43px] shadow-lg overflow-hidden bg-white rounded-full border border-[var(--color-gray)]">
-              <img
-                src="/KFCLogo.jpg"
-                alt="KFC Logo"
-                className="w-full h-full"
-              />
-              </div>
-            </div>
-            <div className="flex justify-end items-center mr-7">
-              <ChevronRight className="w-6 h-6 text-[var(--color-lightgray)]" />
-            </div>
+      <div className="flex-1 overflow-y-auto px-4 pb-20 mt-4">
+        {loading && <p className="text-center">Loading groups...</p>}
+        
+        {!loading && filteredGroups.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full mt-[-50px]">
+            <img
+              src="/GroupLogo.png"
+              alt="Group Logo"
+              className="w-32 h-32 object-contain"
+            />
+            <p className="text-base font-bold text-black mt-4">
+              You don't have any groups yet.
+            </p>
+            <p className="text-sm text-[var(--color-lightgray)]">Join or create one to get started</p>
           </div>
-          <p className="text-base font-bold">KFC Party</p>
-          <p className="text-xs text-[var(--color-lightgray)]">12 members</p>
-        </div>
-      </div> */}
+        )}
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
-        <img
-          src="/GroupLogo.png"
-          alt="Group Logo"
-          className="w-35 h-35 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 object-contain"
-        />
-        <p className="text-base sm:text-lg md:text-xl text-center text-black font-bold">
-          You don't have any groups yet.
-        </p>
-        <p className="text-sm text-[var(--color-lightgray)]">Join or create one to get started</p>
+        {!loading && filteredGroups.map((group) => (
+          <div key={group.id} className="rounded-3xl border border-gray-100 bg-white w-full p-4 mb-4 shadow-sm flex items-center justify-between transition-transform active:scale-95">
+             <div className="flex items-start gap-4">
+                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100">
+                    <img src="/KFCLogo.jpg" alt="Group Icon" className="w-full h-full object-cover" />
+                </div>
+                <div className="pt-1">
+                    <p className="text-lg font-bold text-gray-800">{group.name}</p>
+                    <div className="flex items-center mt-1 -space-x-2">
+                        <div className="w-6 h-6 rounded-full bg-red-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-red-600">J</div>
+                        <div className="w-6 h-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-blue-600">M</div>
+                        <div className="w-6 h-6 rounded-full bg-green-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-green-600">A</div>
+                        <span className="text-[10px] text-gray-400 font-bold ml-4">{(group as any)._count?.members || 0} Members</span>
+                    </div>
+                </div>
+             </div>
+             <ChevronRight className="w-6 h-6 text-gray-900" />
+          </div>
+        ))}
       </div>
      
-      <FloatingButton/>
+      {/* Create Group Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl relative">
+                <button onClick={() => setShowCreateModal(false)} className="absolute top-4 right-4 text-gray-400">
+                    <X className="w-6 h-6" />
+                </button>
+                <div className="flex flex-col items-center mb-6">
+                    <UsersRound className="w-12 h-12 text-blue-600 mb-2" />
+                    <h2 className="text-xl font-bold">Create New Group</h2>
+                    <p className="text-sm text-gray-500 text-center">Start tracking expenses with your friends</p>
+                </div>
+                
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 block mb-1">GROUP NAME</label>
+                        <input 
+                            value={newGroupName}
+                            onChange={(e) => setNewGroupName(e.target.value)}
+                            placeholder="e.g., KFC Party Part 2" 
+                            className="w-full bg-gray-100 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    
+                    <div className="flex gap-3 pt-4">
+                        <button 
+                            onClick={() => setShowCreateModal(false)}
+                            className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 active:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleCreateGroup}
+                            className="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-white shadow-lg shadow-blue-200 active:bg-blue-700 disabled:opacity-50"
+                        >
+                            Create Group
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white h-15 w-screen border-t-3 border-[var(--color-gray)] flex flex-row">
+      {/* Floating Plus Button */}
+      <div className="fixed bottom-20 right-6 z-40">
+        <button 
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-600 rounded-full w-14 h-14 flex justify-center items-center shadow-lg shadow-blue-200 active:scale-90 transition-transform cursor-pointer"
+        >
+          <Plus className="text-white w-8 h-8"></Plus>
+        </button>
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white h-16 w-screen border-t border-gray-200 flex flex-row z-40">
         <a className="flex flex-col flex-1 items-center justify-center" href="/expense">
-          <BanknotesIcon className="w-[24px] h-[24px] text-[var(--fun-color-primary)]" />
-          <p className="text-xs text-[var(--fun-color-primary)] font-bold">Expenses</p>
+          <BanknotesIcon className="w-6 h-6 text-blue-600" />
+          <p className="text-[10px] text-blue-600 font-bold">Expenses</p>
         </a>
         <a className="flex flex-col flex-1 items-center justify-center" href="/friends">
-          <UsersRound className="w-6 h-6 text-[var(--fun-color-lightgray)]" />
-          <p className="text-xs text-[var(--fun-color-lightgray)] font-bold">Friends</p>
+          <UsersRound className="w-6 h-6 text-gray-400" />
+          <p className="text-[10px] text-gray-400 font-bold">Friends</p>
         </a>
         <a className="flex flex-col flex-1 items-center justify-center" href="/profile">
-          <UserRound className="w-6 h-6 text-[var(--fun-color-lightgray)]" />
-          <p className="text-xs text-[var(--fun-color-lightgray)] font-bold">Profile</p>
+          <UserRound className="w-6 h-6 text-gray-400" />
+          <p className="text-[10px] text-gray-400 font-bold">Profile</p>
         </a>  
       </div>
 

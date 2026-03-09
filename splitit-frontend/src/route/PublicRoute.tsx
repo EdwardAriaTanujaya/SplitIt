@@ -13,7 +13,7 @@ export function PublicRoute() {
 
     // If the user IS authenticated, redirect them away from the public page
     if (isAuth) {
-        return <Navigate to="/home" replace />;
+        return <Navigate to="/expense" replace />;
     }
 
     // If they are NOT authenticated, show the public page (Login, Register)

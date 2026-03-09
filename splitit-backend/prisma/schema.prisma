@@ -1,15 +1,100 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
 }
- 
+
+// 1. Model User: Menyimpan data pengguna aplikasi.
+model User {
+  id           String  @id @default(uuid())
+  email        String  @unique
+  name         String
+  password     String
+  profileImage String?
+  // Tanda '?' berarti boleh kosong (opsional)
+
+  // Relasi ke tabel lain
+  friends          Friendship[]  @relation("userFriends")
+  friendOf         Friendship[]  @relation("friendUsers")
+  groups           GroupMember[]
+  sentMessages     Message[]     @relation("sentMessages")
+  receivedMessages Message[]     @relation("receivedMessages")
+  expensesPaid     Expense[]     // <-- Tambahan relasi agar tahu user ini bayar tagihan apa aja
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 2. Model Friendship: Menyimpan daftar pertemanan.
+model Friendship {
+  id       String @id @default(uuid())
+  userId   String
+  friendId String
+
+  // Relasi kembali ke User
+  user   User @relation("userFriends", fields: [userId], references: [id])
+  friend User @relation("friendUsers", fields: [friendId], references: [id])
+
+  status    String   @default("ACCEPTED") // Bisa "PENDING", "ACCEPTED"
+  createdAt DateTime @default(now())
+
+  // Mencegah duplikasi: user A dan user B hanya bisa punya 1 record pertemanan
+  @@unique([userId, friendId])
+}
+
+// 3. Model Group: Menyimpan data Grup (misal: "KFC Party").
+model Group {
+  id         String  @id @default(uuid())
+  name       String
+  groupImage String?
+  members    GroupMember[]
+  expenses   Expense[]       // <-- Tambahan relasi untuk menampung daftar tagihan di grup ini
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 4. Model GroupMember: Menghubungkan User dengan Group (Many-to-Many).
+model GroupMember {
+  id      String @id @default(uuid())
+  userId  String
+  groupId String
+
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  // 1 user tidak bisa join grup yang sama 2 kali
+  @@unique([userId, groupId])
+}
+
+// 5. Model Message: Menyimpan pesan personal antar teman (Chat).
+model Message {
+  id      String @id @default(uuid())
+  content String
+
+  senderId   String
+  receiverId String
+
+  sender   User @relation("sentMessages", fields: [senderId], references: [id])
+  receiver User @relation("receivedMessages", fields: [receiverId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// 6. Model Expense: Menyimpan data tagihan (TAMBAHAN BARU)
+model Expense {
+  id          String   @id @default(uuid())
+  title       String   // Contoh: "Ayam KFC 2 Bucket"
+  amount      Float    // Contoh: 250000
+  groupId     String
+  payerId     String   // Mencatat siapa yang bayarin duluan
+  createdAt   DateTime @default(now())
+
+  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  payer       User     @relation(fields: [payerId], references: [id])
+}

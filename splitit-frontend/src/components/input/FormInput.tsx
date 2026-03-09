@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 interface FormInputProps {
   Icon: React.ElementType;
@@ -20,14 +20,8 @@ function FormInput({
   errorMessage,
 }: FormInputProps) {
   
-  const [isValid, setValid] = useState<boolean>(true);
   const [isON, setON] = useState<boolean>(false);
-
-  useEffect(() => {
-    if(onValidate){
-      setValid(onValidate(value));
-    }
-  }, [value, onValidate]);
+  const isValid = onValidate ? onValidate(value) : true;
 
   const showUIError: boolean = isON && !isValid;
 
