@@ -8,7 +8,6 @@ import useUserAuth from "../store/UserAuthStore";
 
 function FriendMain() {
   const [search, setSearch] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"friends" | "requests">("friends");
   const [showAddModal, setShowAddModal] = useState(false);
   const [friendIdInput, setFriendIdInput] = useState("");
   
@@ -54,59 +53,18 @@ function FriendMain() {
           placeholder="Search friends"
         />
 
-        {/* Tabs - Matches Figma Image 4 */}
-        <div className="flex px-4 mt-6 gap-0 bg-blue-100 rounded-2xl mx-4 p-1">
-            <button 
-                onClick={() => setActiveTab("requests")}
-                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === "requests" ? "bg-blue-600 text-white shadow-md" : "text-blue-600"}`}
-            >
-                Add new friend
-            </button>
-            <button 
-                onClick={() => setActiveTab("friends")}
-                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === "friends" ? "bg-blue-600 text-white shadow-md" : "text-blue-600"}`}
-            >
-                Friends
-            </button>
-        </div>
-
         <div className="flex-1 overflow-y-auto px-4 pb-20 mt-4">
-            {activeTab === "friends" && (
-                <div className="flex flex-col items-center justify-center h-full mt-[-80px]">
-                    <img
-                        src="/FriendLogo.png"
-                        alt="Friend Logo"
-                        className="w-32 h-32 object-contain"
-                    />
-                    <p className="text-base font-bold text-black mt-4">
-                        You don't have any friends yet.
-                    </p>
-                    <p className="text-sm text-[var(--color-lightgray)]">Add friends to get started</p>
-                </div>
-            )}
-
-            {activeTab === "requests" && (
-                <div className="space-y-3">
-                    {pendingRequests.length === 0 && <p className="text-center text-gray-400 mt-10">No pending requests</p>}
-                    {pendingRequests.map((req) => (
-                        <div key={req.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                                    {req.user.name[0]}
-                                </div>
-                                <div>
-                                    <p className="font-bold text-sm">{req.user.name}</p>
-                                    <p className="text-xs text-gray-400">wants to be your friend</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => handleRespond(req.id, "ACCEPTED")} className="p-2 bg-blue-600 text-white rounded-lg"><Plus className="w-4 h-4"/></button>
-                                <button onClick={() => handleRespond(req.id, "REJECTED")} className="p-2 bg-gray-100 text-gray-400 rounded-lg"><X className="w-4 h-4"/></button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <div className="flex flex-col items-center justify-center h-full mt-[-80px]">
+                <img
+                    src="/FriendLogo.png"
+                    alt="Friend Logo"
+                    className="w-32 h-32 object-contain"
+                />
+                <p className="text-base font-bold text-black mt-4">
+                    You don't have any friends yet.
+                </p>
+                <p className="text-sm text-[var(--color-lightgray)]">Add friends to get started</p>
+            </div>
         </div>
 
       {/* Add Friend Modal */}
