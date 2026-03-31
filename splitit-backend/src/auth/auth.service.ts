@@ -1,28 +1,28 @@
 import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service'; // Memanggil koneksi database kita
+import { PrismaService } from '../prisma/prisma.service'; // Import our database connection
 import * as bcrypt from 'bcrypt';
 import { RegisterDto, LoginDto } from './dto/create-auth.dto';
 
 @Injectable()
 export class AuthService {
-  // Dependency Injection: Kita memasukkan PrismaService agar si Koki (Service) bisa akses Database
+  // Dependency Injection: Inject PrismaService so this service can access the database
   constructor(private prisma: PrismaService) {}
 
-  // FUNGSI 1: REGISTER
+  // FUNCTION 1: REGISTER
   async register(data: RegisterDto) {
-    // 1. Cek apakah email sudah pernah didaftarkan sebelumnya
+    // 1. Check whether the email has already been registered
     const existingUser = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
 
     if (existingUser) {
-      throw new BadRequestException('Email sudah terdaftar, silakan gunakan email lain.');
+      throw new BadRequestException('Email has been used, please use another email!');
     }
 
-    // 2. Acak password menggunakan bcrypt (Salt rounds = 10, standar keamanan yang baik)
+    // 2. Hash the password using bcrypt (Salt rounds = 10, good security standard)
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // 3. Simpan data user baru ke database PostgreSQL via Prisma
+    // 3. Save the new user data to the PostgreSQL database via Prisma
     const newUser = await this.prisma.user.create({
       data: {
         name: data.name,
@@ -31,46 +31,46 @@ export class AuthService {
       },
     });
 
-    // 4. Kembalikan data user ke frontend, TAPI password-nya kita buang biar aman
+    // 4. Return user data to the frontend, but exclude the password for safety
     const { password, ...result } = newUser;
     return result;
   }
 
-  // FUNGSI 2: LOGIN
+  // FUNCTION 2: LOGIN
   async login(data: LoginDto) {
-    // 1. Cari user di database berdasarkan email
+    // 1. Find the user in the database by email
     const user = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
 
-    // 2. Jika email tidak ditemukan
+    // 2. If the user is not found
     if (!user) {
-      throw new UnauthorizedException('Email atau password salah!');
+      throw new UnauthorizedException('Email or password is incorrect!');
     }
 
-    // 3. Cocokkan password dari frontend dengan password acak di database
+    // 3. Compare the password from the frontend with the hashed password in the database
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Email atau password salah!');
+      throw new UnauthorizedException('Email or password is incorrect!');
     }
 
-    // 4. Jika berhasil, kembalikan data user (tanpa password)
+    // 4. If successful, return user data (without password)
     const { password, ...result } = user;
     return {
-      message: 'Login berhasil!',
+      message: 'Successfully logged in!',
       user: result,
     };
   }
 
-  // FUNGSI 3: LIHAT PROFIL (Berdasarkan ID dari Cookie)
+  // FUNCTION 3: FETCH PROFILE (Based on ID from Cookie)
   async fetchProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!user) {
-      throw new UnauthorizedException('User tidak ditemukan atau silakan login ulang.');
+      throw new UnauthorizedException('User not found. Please log in again.');
     }
 
     const { password, ...result } = user;

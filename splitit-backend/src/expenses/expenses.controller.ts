@@ -6,13 +6,13 @@ import { CreateExpenseDto } from './dto/create-expense.dto';
 export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
-  // Rute: POST http://127.0.0.1:3000/expenses
+  // Route: POST http://127.0.0.1:3000/expenses
   @Post()
   addExpense(@Body() createExpenseDto: CreateExpenseDto) {
     return this.expensesService.addExpense(createExpenseDto);
   }
 
-  // Rute: GET http://127.0.0.1:3000/expenses/group/:groupId
+  // Route: GET http://127.0.0.1:3000/expenses/group/:groupId
   @Get('group/:groupId')
   getGroupExpenses(@Param('groupId') groupId: string) {
     return this.expensesService.getGroupExpenses(groupId);

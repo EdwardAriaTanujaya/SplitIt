@@ -2,15 +2,19 @@ import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateGroupDto {
   @IsString()
-  @IsNotEmpty({ message: 'Nama grup tidak boleh kosong' })
-  name: string; // Nama grup (Contoh: "KFC Party")
+  @IsNotEmpty({ message: 'Group name must not be empty' })
+  name: string; // Group name (e.g. "KFC Party")
 
   @IsString()
-  @IsNotEmpty({ message: 'Creator ID tidak boleh kosong' })
-  creatorId: string; // ID kamu (orang yang bikin grup)
+  @IsNotEmpty({ message: 'Creator ID must not be empty' })
+  creatorId: string; // Your ID (the group creator)
 
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  memberIds?: string[]; // (Opsional) Array ID teman-teman yang mau langsung dimasukkan
+  memberIds?: string[]; // (Optional) Array of friend IDs to add immediately
+
+  @IsOptional()
+  @IsString()
+  groupImage?: string; // (Optional) Path / icon for the group category
 }

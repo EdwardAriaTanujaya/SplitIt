@@ -2,15 +2,15 @@ import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
 
 export class CreateExpenseDto {
   @IsString()
-  @IsNotEmpty({ message: 'Judul pengeluaran tidak boleh kosong' })
+  @IsNotEmpty({ message: 'Expense title must not be empty' })
   title: string;
 
-  @IsNumber({}, { message: 'Jumlah harus berupa angka' })
+  @IsNumber({}, { message: 'Amount must be a number' })
   amount: number;
 
-  @IsUUID('4', { message: 'Group ID harus berupa UUID yang valid' })
+  @IsUUID('4', { message: 'Group ID must be a valid UUID' })
   groupId: string;
 
-  @IsUUID('4', { message: 'Payer ID harus berupa UUID yang valid' })
+  @IsUUID('4', { message: 'Payer ID must be a valid UUID' })
   payerId: string;
 }

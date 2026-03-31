@@ -6,21 +6,22 @@ import { AddFriendDto, RespondFriendDto } from './dto/create-friend.dto';
 export class FriendsService {
   constructor(private prisma: PrismaService) {}
 
-  // FUNGSI 1: KIRIM PERMINTAAN PERTEMANAN (Add Friend)
+  // FUNCTION 1: SEND FRIEND REQUEST
   async sendFriendRequest(data: AddFriendDto) {
-    // 0. Cek apakah pengirim (kamu) terdaftar di DB
+    // 0. Check whether the sender is registered in the DB
     const requester = await this.prisma.user.findUnique({
       where: { id: data.requesterId },
     });
 
     if (!requester) {
-      throw new NotFoundException('ID Pengirim (kamu) tidak ditemukan di database. Silakan login ulang.');
+      throw new NotFoundException('Sender ID not found in the database. Please log in again.');
     }
 
-    // 1. Cari user tujuan berdasarkan nama atau email
+    // 1. Find the target user by name or email
     const targetUser = await this.prisma.user.findFirst({
       where: {
         OR: [
+          { id: data.friendEmailOrName },
           { email: data.friendEmailOrName },
           { name: data.friendEmailOrName },
         ],
@@ -28,14 +29,14 @@ export class FriendsService {
     });
 
     if (!targetUser) {
-      throw new NotFoundException('User tidak ditemukan!');
+      throw new NotFoundException('User not found!');
     }
 
     if (targetUser.id === data.requesterId) {
-      throw new BadRequestException('Kamu tidak bisa menambahkan dirimu sendiri.');
+      throw new BadRequestException('You cannot add yourself.');
     }
 
-    // Cek apakah mereka sudah pernah berteman atau request sudah ada
+    // Check whether they are already friends or the request already exists
     const existingFriendship = await this.prisma.friendship.findFirst({
       where: {
         OR: [
@@ -46,10 +47,10 @@ export class FriendsService {
     });
 
     if (existingFriendship) {
-      throw new BadRequestException('Permintaan pertemanan sudah ada atau kalian sudah berteman.');
+      throw new BadRequestException('Friend request already exists or you are already friends.');
     }
 
-    // Buat data pertemanan baru dengan status PENDING
+    // Create a new friend request record with PENDING status
     const newRequest = await this.prisma.friendship.create({
       data: {
         userId: data.requesterId,
@@ -58,47 +59,84 @@ export class FriendsService {
       },
     });
 
-    return { message: 'Permintaan pertemanan berhasil dikirim!', data: newRequest };
+    return { message: 'Friend request sent successfully!', data: newRequest };
   }
 
-  // FUNGSI 2: CEK NOTIFIKASI (Melihat siapa saja yang nge-add kita)
+  // FUNCTION 2: CHECK NOTIFICATIONS (See who added you)
   async getPendingRequests(userId: string) {
-    // Cari data di mana kita adalah 'friendId' dan statusnya masih PENDING
+    // Find records where we are the 'friendId' and the status is still PENDING
     return this.prisma.friendship.findMany({
       where: {
         friendId: userId,
         status: 'PENDING',
       },
       include: {
-        user: { select: { id: true, name: true, email: true } }, // Bawa data nama orang yang nge-add
+        user: { select: { id: true, name: true, email: true } }, // Include the name of the user who sent the request
       },
     });
   }
 
-  // FUNGSI 3: TERIMA ATAU TOLAK (Accept / Decline)
+  async getNotifications(userId: string) {
+    const pendingRequests = await this.getPendingRequests(userId);
+    return pendingRequests.map((request) => ({
+      id: request.id,
+      type: 'FRIEND_REQUEST',
+      message: `${request.user.name} sent you a friend request.`,
+      user: request.user,
+      createdAt: request.createdAt,
+    }));
+  }
+
+  async getAcceptedFriends(userId: string) {
+    const friendships = await this.prisma.friendship.findMany({
+      where: {
+        status: 'ACCEPTED',
+        OR: [
+          { userId: userId },
+          { friendId: userId },
+        ],
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        friend: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    return friendships.map((friendship) => {
+      const otherUser = friendship.userId === userId ? friendship.friend : friendship.user;
+      return {
+        id: friendship.id,
+        status: friendship.status,
+        friendId: otherUser.id,
+        friend: otherUser,
+      };
+    });
+  }
+
+  // FUNCTION 3: ACCEPT OR DECLINE
   async respondToRequest(data: RespondFriendDto) {
     const friendship = await this.prisma.friendship.findUnique({
       where: { id: data.friendshipId },
     });
 
     if (!friendship || friendship.friendId !== data.userId) {
-      throw new NotFoundException('Permintaan pertemanan tidak valid.');
+      throw new NotFoundException('Invalid friend request.');
     }
 
     if (data.status === 'DECLINED') {
-      // Kalau ditolak, kita hapus saja datanya dari database
+      // If declined, delete the record from the database
       await this.prisma.friendship.delete({
         where: { id: data.friendshipId },
       });
-      return { message: 'Permintaan pertemanan ditolak.' };
+      return { message: 'Friend request rejected.' };
     }
 
-    // Kalau diterima (ACCEPTED), kita update statusnya
+    // If accepted, update the status
     const updatedFriendship = await this.prisma.friendship.update({
       where: { id: data.friendshipId },
       data: { status: 'ACCEPTED' },
     });
 
-    return { message: 'Permintaan pertemanan diterima!', data: updatedFriendship };
+    return { message: 'Friend request accepted!', data: updatedFriendship };
   }
 }

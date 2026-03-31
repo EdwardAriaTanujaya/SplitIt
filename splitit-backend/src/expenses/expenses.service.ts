@@ -6,18 +6,18 @@ import { CreateExpenseDto } from './dto/create-expense.dto';
 export class ExpensesService {
   constructor(private prisma: PrismaService) {}
 
-  // FUNGSI 1: CATAT TAGIHAN BARU
+  // FUNCTION 1: RECORD NEW EXPENSE
   async addExpense(data: CreateExpenseDto) {
-    // Cek dulu apakah grupnya beneran ada
+    // Check whether the group actually exists
     const group = await this.prisma.group.findUnique({
       where: { id: data.groupId },
     });
     
     if (!group) {
-      throw new NotFoundException('Grup tidak ditemukan!');
+      throw new NotFoundException('Group not found!');
     }
 
-    // Masukkan data tagihan ke database
+    // Insert the expense into the database
     const newExpense = await this.prisma.expense.create({
       data: {
         title: data.title,
@@ -27,17 +27,17 @@ export class ExpensesService {
       },
     });
 
-    return { message: 'Tagihan berhasil dicatat!', data: newExpense };
+    return { message: 'Expense recorded successfully!', data: newExpense };
   }
 
-  // FUNGSI 2: LIHAT SEMUA TAGIHAN DI SATU GRUP
+  // FUNCTION 2: VIEW ALL EXPENSES IN A GROUP
   async getGroupExpenses(groupId: string) {
     return this.prisma.expense.findMany({
       where: { groupId: groupId },
       include: {
-        payer: { select: { id: true, name: true } } // Bawa data nama yang nalangin
+        payer: { select: { id: true, name: true } } // Include the name of the payer
       },
-      orderBy: { createdAt: 'desc' } // Urutkan dari tagihan paling baru
+      orderBy: { createdAt: 'desc' } // Order by newest first
     });
   }
 }

@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // 1. Tambahkan CORS agar Web bisa mengakses Backend
+  // 1. Enable CORS so the web frontend can access the backend
   app.enableCors({
     origin: true, 
     credentials: true,

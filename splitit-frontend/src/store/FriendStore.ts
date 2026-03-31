@@ -14,27 +14,43 @@ interface Friend {
 
 interface FriendStore {
     friends: Friend[];
+    notifications: any[];
     pendingRequests: any[];
+    acceptedFriends: Friend[];
     loading: boolean;
     error: string | null;
     fetchFriends: (userId: string) => Promise<void>;
+    fetchNotifications: (userId: string) => Promise<void>;
     sendRequest: (userId: string, friendId: string) => Promise<void>;
-    respondToRequest: (requestId: string, status: "ACCEPTED" | "REJECTED") => Promise<void>;
+    respondToRequest: (userId: string, requestId: string, status: "ACCEPTED" | "DECLINED") => Promise<void>;
 }
 
 const useFriendStore = create<FriendStore>((set) => ({
     friends: [],
+    notifications: [],
     pendingRequests: [],
+    acceptedFriends: [],
     loading: false,
     error: null,
 
     fetchFriends: async (userId: string) => {
         set({ loading: true, error: null });
         try {
-            // Need a get friends by user ID endpoint if not in controller.
-            // Let's assume it exists or check it.
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/friends/pending/${userId}`, { withCredentials: true });
-            set({ pendingRequests: response.data, loading: false });
+            const [pendingResponse, acceptedResponse] = await Promise.all([
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/friends/pending/${userId}`, { withCredentials: true }),
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/friends/accepted/${userId}`, { withCredentials: true }),
+            ]);
+            set({ pendingRequests: pendingResponse.data, acceptedFriends: acceptedResponse.data, loading: false });
+        } catch (err: any) {
+            set({ error: err.message, loading: false });
+        }
+    },
+
+    fetchNotifications: async (userId: string) => {
+        set({ loading: true, error: null });
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/friends/notifications/${userId}`, { withCredentials: true });
+            set({ notifications: response.data, loading: false });
         } catch (err: any) {
             set({ error: err.message, loading: false });
         }
@@ -44,25 +60,28 @@ const useFriendStore = create<FriendStore>((set) => ({
         set({ loading: true, error: null });
         try {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/friends/request`, {
-                userId,
-                friendId,
+                requesterId: userId,
+                friendEmailOrName: friendId,
             }, { withCredentials: true });
             set({ loading: false });
         } catch (err: any) {
             set({ error: err.message, loading: false });
+            throw err;
         }
     },
 
-    respondToRequest: async (requestId: string, status: "ACCEPTED" | "REJECTED") => {
+    respondToRequest: async (userId: string, requestId: string, status: "ACCEPTED" | "DECLINED") => {
         set({ loading: true, error: null });
         try {
             await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/friends/respond`, {
-                requestId,
+                userId,
+                friendshipId: requestId,
                 status,
             }, { withCredentials: true });
             set({ loading: false });
         } catch (err: any) {
             set({ error: err.message, loading: false });
+            throw err;
         }
     },
 }));
