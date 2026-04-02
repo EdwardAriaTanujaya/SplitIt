@@ -4,6 +4,7 @@ import { create } from "zustand";
 interface Group {
     id: string;
     name: string;
+    groupImage?: string;
     members: any[];
 }
 
@@ -12,7 +13,7 @@ interface GroupStore {
     loading: boolean;
     error: string | null;
     fetchGroups: (userId: string) => Promise<void>;
-    createGroup: (name: string, memberIds: string[], creatorId: string) => Promise<void>;
+    createGroup: (name: string, memberIds: string[], creatorId: string, groupImage?: string) => Promise<void>;
 }
 
 const useGroupStore = create<GroupStore>((set) => ({
@@ -30,13 +31,14 @@ const useGroupStore = create<GroupStore>((set) => ({
         }
     },
 
-    createGroup: async (name: string, memberIds: string[], creatorId: string) => {
+    createGroup: async (name: string, memberIds: string[], creatorId: string, groupImage?: string) => {
         set({ loading: true, error: null });
         try {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/groups`, {
                 name,
                 memberIds,
                 creatorId,
+                groupImage,
             }, { withCredentials: true });
             set({ loading: false });
         } catch (err: any) {

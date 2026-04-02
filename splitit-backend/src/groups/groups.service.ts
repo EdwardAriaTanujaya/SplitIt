@@ -7,26 +7,27 @@ import { CreateExpenseDto } from './dto/create-expense.dto';
 export class GroupsService {
   constructor(private prisma: PrismaService) {}
 
-  // FUNGSI 1: BIKIN GRUP BARU
+  // FUNCTION 1: CREATE GROUP
   async createGroup(data: CreateGroupDto) {
-    // 1. Pastikan pembuat grup (Creator) ada di database
+    // 1. Ensure the group creator exists in the database
     const creator = await this.prisma.user.findUnique({
       where: { id: data.creatorId },
     });
 
     if (!creator) {
-      throw new NotFoundException('ID Pembuat (Creator) tidak ditemukan di database.');
+      throw new NotFoundException('Creator ID not found in the database.');
     }
 
-    // 2. Gabungkan ID pembuat dan member lain, lalu hapus ID yang duplikat
+    // 2. Combine creator ID and other member IDs, then remove duplicates
     const rawMemberIds = data.memberIds ? [data.creatorId, ...data.memberIds] : [data.creatorId];
     const uniqueMemberIds = [...new Set(rawMemberIds)];
 
-    // 3. Bikin grup sekaligus menambahkan semua anggotanya ke tabel GroupMember
+    // 3. Create the group and add all members to the GroupMember table
     try {
       const newGroup = await this.prisma.group.create({
         data: {
           name: data.name,
+          groupImage: data.groupImage,
           members: {
             create: uniqueMemberIds.map(id => ({
               userId: id
@@ -42,13 +43,13 @@ export class GroupsService {
         }
       });
 
-      return { message: 'Grup berhasil dibuat!', data: newGroup };
+      return { message: 'Group created successfully!', data: newGroup };
     } catch (error) {
-      throw new NotFoundException('Salah satu ID member tidak ditemukan. Pastikan semua teman sudah register.');
+      throw new NotFoundException('One or more member IDs were not found. Make sure all friends are registered.');
     }
   }
 
-  // FUNGSI 2: LIHAT DAFTAR GRUP (Sesuai UI Halaman 3 & 7)
+  // FUNCTION 2: VIEW GROUP LIST (As seen in UI Pages 3 & 7)
   async getUserGroups(userId: string) {
     return this.prisma.group.findMany({
       where: {
@@ -66,7 +67,7 @@ export class GroupsService {
     });
   }
 
-  // FUNGSI 3: LIHAT DETAIL GRUP (Saat grupnya di-klik)
+  // FUNCTION 3: VIEW GROUP DETAILS (When the group is clicked)
   async getGroupDetail(groupId: string) {
     const group = await this.prisma.group.findUnique({
       where: { id: groupId },
@@ -80,29 +81,29 @@ export class GroupsService {
       }
     });
 
-    if (!group) throw new NotFoundException('Grup tidak ditemukan');
+    if (!group) throw new NotFoundException('Group not found');
     return group;
   }
 
-  // FUNGSI 4: TAMBAHKAN PENGELUARAN (Sesuai UI Halaman 8)
+  // FUNCTION 4: ADD EXPENSE (As seen in UI Page 8)
   async addExpense(data: CreateExpenseDto) {
-    // 1. Pastikan grup ada di database
+    // 1. Ensure the group exists in the database
     const group = await this.prisma.group.findUnique({
       where: { id: data.groupId },
     });
     if (!group) {
-      throw new NotFoundException(`Grup dengan ID ${data.groupId} tidak ditemukan. Silakan buat grup baru atau cek ID-nya.`);
+      throw new NotFoundException(`Group with ID ${data.groupId} not found. Please create a group first or check the ID.`);
     }
 
-    // 2. Pastikan orang yang bayar (payer) adalah anggota grup
+    // 2. Ensure the payer is a member of the group
     const member = await this.prisma.groupMember.findFirst({
       where: { groupId: data.groupId, userId: data.payerId },
     });
     if (!member) {
-      throw new BadRequestException(`User dengan ID ${data.payerId} bukan anggota dari grup ini!`);
+      throw new BadRequestException(`User with ID ${data.payerId} is not a member of this group!`);
     }
 
-    // 3. Simpan data pengeluaran
+    // 3. Save the expense data
     const expense = await this.prisma.expense.create({
       data: {
         title: data.title,
@@ -112,6 +113,6 @@ export class GroupsService {
       },
     });
 
-    return { message: 'Tagihan berhasil ditambahkan!', data: expense };
+    return { message: 'Expense added successfully!', data: expense };
   }
 }

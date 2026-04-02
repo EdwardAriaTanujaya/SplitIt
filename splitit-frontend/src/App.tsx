@@ -7,6 +7,7 @@ import UserLogin from "./pages/auth/UserLogin";
 import ExpenseMain from "./pages/ExpenseMain";
 import FriendMain from "./pages/FriendMain";
 import UserProfile from "./pages/UserProfile";
+import Notification from "./pages/Notification";
 import { useEffect } from "react";
 import useUserAuth from "./store/UserAuthStore";
 
@@ -30,6 +31,7 @@ function App() {
                 <Route path="/expense" element={<ExpenseMain />} />
                 <Route path="/friends" element={<FriendMain />} />
                 <Route path="/profile" element={<UserProfile />} />
+                <Route path="/notification" element={<Notification />} />
             </Route>
         </Routes>
     );

@@ -2,25 +2,25 @@ import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class RegisterDto {
     @IsString()
-    @IsNotEmpty({ message: 'Nama tidak boleh kosong' })
+    @IsNotEmpty({ message: 'Name must not be empty' })
     name: string;
 
-    @IsEmail({}, { message: 'Format email tidak valid' })
-    @IsNotEmpty({ message: 'Email tidak boleh kosong' })
+    @IsEmail({}, { message: 'Invalid email format' })
+    @IsNotEmpty({ message: 'Email must not be empty' })
     email: string;
 
     @IsString()
-    @IsNotEmpty({ message: 'Password tidak boleh kosong' })
-    @MinLength(6, { message: 'Password minimal 6 karakter' })
+    @IsNotEmpty({ message: 'Password must not be empty' })
+    @MinLength(6, { message: 'Password must be at least 6 characters' })
     password: string;
 }
 
 export class LoginDto {
-    @IsEmail({}, { message: 'Format email tidak valid' })
-    @IsNotEmpty({ message: 'Email tidak boleh kosong' })
+    @IsEmail({}, { message: 'Invalid email format' })
+    @IsNotEmpty({ message: 'Email must not be empty' })
     email: string;
 
     @IsString()
-    @IsNotEmpty({ message: 'Password tidak boleh kosong' })
+    @IsNotEmpty({ message: 'Password must not be empty' })
     password: string;
 }

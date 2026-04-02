@@ -2,6 +2,8 @@ import axios from "axios";
 import { create } from "zustand";
 import type { UserAuthType } from "../type/UserAuthType";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
+
 const useUserAuth = create<UserAuthType>((set, get) => ({
   //initial value of the user
   user: null,
@@ -10,7 +12,7 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
   register: async (name, email, password) => {
     try {
       //create user infomation in db
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/register`, {
+      await axios.post(`${API_BASE_URL}/auth/register`, {
         name,
         email,
         password,
@@ -30,7 +32,7 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
   login: async (userEmail, password) => {
     // Fetching and storing token
     const res = await axios.post(
-      `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
+      `${API_BASE_URL}/auth/login`,
       {
         email: userEmail,
         password,
@@ -45,7 +47,7 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
   fetchProfile: async () => {
     try {
       const userRes = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/profile`,
+        `${API_BASE_URL}/auth/profile`,
         {
           withCredentials: true,
         }
@@ -67,7 +69,7 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
   logout: async () => {
     set({ user: null });
     await axios.post(
-      `${import.meta.env.VITE_API_BASE_URL}/auth/logout`,
+      `${API_BASE_URL}/auth/logout`,
       {},
       { withCredentials: true }
     );

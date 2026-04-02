@@ -1,27 +1,27 @@
 import { IsIn, IsNotEmpty, IsString } from 'class-validator';
 
-// Aturan saat kita mau nge-add teman (Sesuai UI Halaman 5)
+// Rules for sending a friend request (UI page flow)
 export class AddFriendDto {
   @IsString()
-  @IsNotEmpty({ message: 'Requester ID tidak boleh kosong' })
-  requesterId: string; // ID kamu (orang yang menekan tombol Add)
+  @IsNotEmpty({ message: 'Requester ID cannot be empty' })
+  requesterId: string; // Your ID (the user clicking Add)
 
   @IsString()
-  @IsNotEmpty({ message: 'Nama atau Email teman tidak boleh kosong' })
-  friendEmailOrName: string; // Username atau Email teman yang mau di-add
+  @IsNotEmpty({ message: 'Friend name or email cannot be empty' })
+  friendEmailOrName: string; // The username or email of the friend to add
 }
 
-// Aturan saat kita merespons notifikasi (Sesuai UI Halaman 6)
+// Rules for responding to notifications
 export class RespondFriendDto {
   @IsString()
-  @IsNotEmpty({ message: 'User ID tidak boleh kosong' })
-  userId: string; // ID kamu (orang yang menerima notifikasi)
+  @IsNotEmpty({ message: 'User ID cannot be empty' })
+  userId: string; // Your ID (the user receiving the notification)
 
   @IsString()
-  @IsNotEmpty({ message: 'Friendship ID tidak boleh kosong' })
-  friendshipId: string; // ID tiket pertemanan yang mau di-Accept/Decline
+  @IsNotEmpty({ message: 'Friendship ID cannot be empty' })
+  friendshipId: string; // The friend request ticket ID to accept/decline
 
   @IsString()
-  @IsIn(['ACCEPTED', 'DECLINED'], { message: 'Status harus ACCEPTED atau DECLINED' })
-  status: 'ACCEPTED' | 'DECLINED'; // Pilihan tombolnya
+  @IsIn(['ACCEPTED', 'DECLINED'], { message: 'Status must be ACCEPTED or DECLINED' })
+  status: 'ACCEPTED' | 'DECLINED'; // The selected action button
 }
