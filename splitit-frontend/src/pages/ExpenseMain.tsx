@@ -85,9 +85,11 @@ function ExpenseMain() {
               className="w-32 h-32 object-contain"
             />
             <p className="text-base font-bold text-black mt-4">
-              You don't have any groups yet.
+              {groups.length === 0 && search.trim() === "" ? "You don't have any groups yet." : "No groups match your search."}
             </p>
-            <p className="text-sm text-[var(--color-lightgray)]">Join or create one to get started</p>
+            <p className="text-sm text-[var(--color-lightgray)]">
+              {groups.length === 0 && search.trim() === "" ? "Join or create one to get started" : "Try another group name."}
+            </p>
           </div>
         )}
 
@@ -230,7 +232,7 @@ function ExpenseMain() {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 cursor-pointer active:bg-gray-50"
+                  className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 cursor-pointer active:bg-gray-50 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -238,7 +240,7 @@ function ExpenseMain() {
                   <button
                     onClick={() => setModalStep(2)}
                     disabled={selectedMemberIds.length === 0}
-                    className="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-white shadow-lg shadow-blue-200 cursor-pointer active:bg-blue-700 disabled:opacity-50"
+                    className="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-white shadow-lg shadow-blue-200 cursor-pointer active:bg-blue-700 disabled:opacity-50 cursor-pointer"
                   >
                     Next
                   </button>
@@ -246,16 +248,16 @@ function ExpenseMain() {
                   <>
                     <button
                       onClick={() => setModalStep(1)}
-                      className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 active:bg-gray-50"
+                      className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 active:bg-gray-50 cursor-pointer"
                     >
                       Back
                     </button>
                     <button
                       onClick={handleCreateGroup}
                       disabled={newGroupName.trim().length === 0}
-                      className="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-white shadow-lg shadow-blue-200 active:bg-blue-700 disabled:opacity-50"
+                      className="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-white shadow-lg shadow-blue-200 active:bg-blue-700 disabled:opacity-50 cursor-pointer"
                     >
-                      Create Group
+                      Create
                     </button>
                   </>
                 )}

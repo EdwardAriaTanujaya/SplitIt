@@ -6,9 +6,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { FriendsModule } from './friends/friends.module';
 import { GroupsModule } from './groups/groups.module';
 import { ExpensesModule } from './expenses/expenses.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, FriendsModule, GroupsModule, ExpensesModule],
+  imports: [AuthModule, PrismaModule, FriendsModule, GroupsModule, ExpensesModule, MessagesModule],
   controllers: [AppController],
   providers: [AppService],
 })

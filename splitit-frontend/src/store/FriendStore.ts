@@ -17,10 +17,13 @@ interface FriendStore {
     notifications: any[];
     pendingRequests: any[];
     acceptedFriends: Friend[];
+    messages: any[];
     loading: boolean;
     error: string | null;
     fetchFriends: (userId: string) => Promise<void>;
     fetchNotifications: (userId: string) => Promise<void>;
+    fetchConversation: (userId: string, friendId: string) => Promise<void>;
+    sendMessage: (senderId: string, receiverId: string, content: string) => Promise<void>;
     sendRequest: (userId: string, friendId: string) => Promise<void>;
     respondToRequest: (userId: string, requestId: string, status: "ACCEPTED" | "DECLINED") => Promise<void>;
 }
@@ -30,6 +33,7 @@ const useFriendStore = create<FriendStore>((set) => ({
     notifications: [],
     pendingRequests: [],
     acceptedFriends: [],
+    messages: [],
     loading: false,
     error: null,
 
@@ -53,6 +57,31 @@ const useFriendStore = create<FriendStore>((set) => ({
             set({ notifications: response.data, loading: false });
         } catch (err: any) {
             set({ error: err.message, loading: false });
+        }
+    },
+
+    fetchConversation: async (userId: string, friendId: string) => {
+        set({ loading: true, error: null });
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/messages/conversation/${userId}/${friendId}`, { withCredentials: true });
+            set({ messages: response.data, loading: false });
+        } catch (err: any) {
+            set({ error: err.message, loading: false });
+        }
+    },
+
+    sendMessage: async (senderId: string, receiverId: string, content: string) => {
+        set({ loading: true, error: null });
+        try {
+            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/messages/send`, {
+                senderId,
+                receiverId,
+                content,
+            }, { withCredentials: true });
+            set({ loading: false });
+        } catch (err: any) {
+            set({ error: err.message, loading: false });
+            throw err;
         }
     },
 

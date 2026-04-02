@@ -15,7 +15,7 @@ function HeaderTagline({ title, subtitle, onChange, value, placeholder }: Header
       <p className="font-normal text-sm text-[var(--color-lightgray)]">
         {subtitle}
       </p>
-      <div className="w-[95%] h-auto mt-3">
+      <div className="h-auto mt-3 mr-4">
         <div className="relative flex">
           
           <input

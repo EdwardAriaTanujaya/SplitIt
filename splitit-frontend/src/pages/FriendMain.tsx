@@ -1,8 +1,8 @@
-import { UserRound, UsersRound, Plus, X, UserRoundPlus } from "lucide-react";
+import { UserRound, UsersRound, Plus, X, UserRoundPlus, MessageCircleMore } from "lucide-react";
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 import HeaderTagline from "../components/header/HeaderTagline";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/header/Header";
 import useFriendStore from "../store/FriendStore";
 import useUserAuth from "../store/UserAuthStore";
@@ -13,7 +13,12 @@ function FriendMain() {
   const [friendIdInput, setFriendIdInput] = useState("");
   
   const user = useUserAuth((s) => s.user);
-  const { pendingRequests, acceptedFriends, fetchFriends, sendRequest, respondToRequest, loading } = useFriendStore();
+  const navigate = useNavigate();
+  const { acceptedFriends, fetchFriends, sendRequest, loading } = useFriendStore();
+  const filteredFriends = acceptedFriends.filter((friend) =>
+    friend.friend.name.toLowerCase().includes(search.toLowerCase()) ||
+    friend.friend.email.toLowerCase().includes(search.toLowerCase())
+  );
 
   useEffect(() => {
     if (user) {
@@ -33,16 +38,6 @@ function FriendMain() {
     }
   };
 
-  const handleRespond = async (requestId: string, status: "ACCEPTED" | "DECLINED") => {
-    if (!user) return;
-    try {
-        await respondToRequest(user.id, requestId, status);
-        fetchFriends(user.id);
-    } catch (error) {
-        console.error("Failed to respond to request", error);
-    }
-  }
-
   return (
     <div className="h-screen w-screen bg-white flex flex-col overflow-hidden">
         <Header />
@@ -58,18 +53,24 @@ function FriendMain() {
         <div className="flex-1 overflow-y-auto px-4 pb-20 mt-4">
             {loading && <p className="text-center text-sm text-gray-500">Loading friends...</p>}
 
-            {!loading && acceptedFriends.length > 0 && (
+            {!loading && filteredFriends.length > 0 && (
               <div className="space-y-4">
                 <div className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
-                  <h3 className="text-sm font-bold text-gray-700 mb-3">Accepted Friends</h3>
                   <div className="space-y-3">
-                    {acceptedFriends.map((friend) => (
-                      <div key={friend.friendId} className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 p-3">
+                    {filteredFriends.map((friend) => (
+                      <div key={friend.friendId} className="flex items-center justify-between gap-4">
                         <div>
                           <p className="font-bold text-gray-800">{friend.friend.name}</p>
                           <p className="text-[11px] text-gray-500">{friend.friend.email}</p>
                         </div>
-                        <span className="text-[11px] text-green-600 font-semibold">Friend</span>
+                        <div className="flex flex-col items-end">
+                          <button
+                            onClick={() => navigate(`/chat/${friend.friendId}`)}
+                            className="rounded-2xl w-10 h-10 text-[var(--color-lightgray)] cursor-pointer justify-center items-center flex "
+                          >
+                          <MessageCircleMore className="w-6 h-6 inline-block"/>
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -77,35 +78,7 @@ function FriendMain() {
               </div>
             )}
 
-            {!loading && pendingRequests.length > 0 && (
-              <div className="mt-4 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-bold text-gray-700 mb-3">Pending Requests</h3>
-                <div className="space-y-3">
-                  {pendingRequests.map((request: any) => (
-                    <div key={request.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="font-bold text-gray-800">{request.user.name}</p>
-                          <p className="text-[11px] text-gray-500">{request.user.email}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleRespond(request.id, 'ACCEPTED')}
-                            className="rounded-2xl bg-green-600 px-3 py-2 text-[11px] font-bold text-white"
-                          >Accept</button>
-                          <button
-                            onClick={() => handleRespond(request.id, 'DECLINED')}
-                            className="rounded-2xl bg-red-600 px-3 py-2 text-[11px] font-bold text-white"
-                          >Decline</button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {!loading && acceptedFriends.length === 0 && pendingRequests.length === 0 && (
+            {!loading && filteredFriends.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full mt-[-80px]">
                 <img
                     src="/FriendLogo.png"
@@ -113,9 +86,11 @@ function FriendMain() {
                     className="w-32 h-32 object-contain"
                 />
                 <p className="text-base font-bold text-black mt-4">
-                    You don't have any friends yet.
+                    {acceptedFriends.length === 0 && search.trim() === "" ? "You don't have any friends yet." : "No friends match your search."}
                 </p>
-                <p className="text-sm text-[var(--color-lightgray)]">Add friends to get started</p>
+                <p className="text-sm text-[var(--color-lightgray)]">
+                    {acceptedFriends.length === 0 && search.trim() === "" ? "Add friends to get started" : "Try another name or email."}
+                </p>
               </div>
             )}
         </div>

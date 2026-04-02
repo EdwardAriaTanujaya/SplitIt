@@ -8,6 +8,7 @@ import ExpenseMain from "./pages/ExpenseMain";
 import FriendMain from "./pages/FriendMain";
 import UserProfile from "./pages/UserProfile";
 import Notification from "./pages/Notification";
+import Chat from "./pages/Chat";
 import { useEffect } from "react";
 import useUserAuth from "./store/UserAuthStore";
 
@@ -30,6 +31,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
                 <Route path="/expense" element={<ExpenseMain />} />
                 <Route path="/friends" element={<FriendMain />} />
+                <Route path="/chat/:friendId" element={<Chat />} />
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="/notification" element={<Notification />} />
             </Route>
