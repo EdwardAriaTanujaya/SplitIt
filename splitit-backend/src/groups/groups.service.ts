@@ -62,6 +62,13 @@ export class GroupsService {
       include: {
         _count: {
           select: { members: true }
+        },
+        members: {
+          include: {
+            user: {
+              select: { name: true }
+            }
+          }
         }
       }
     });
@@ -114,5 +121,33 @@ export class GroupsService {
     });
 
     return { message: 'Expense added successfully!', data: expense };
+  }
+
+  // FUNCTION 5: LEAVE GROUP
+  async leaveGroup(groupId: string, userId: string) {
+    const membership = await this.prisma.groupMember.findFirst({
+      where: { groupId, userId },
+    });
+
+    if (!membership) {
+      throw new NotFoundException(`Membership not found for user ${userId} in group ${groupId}.`);
+    }
+
+    await this.prisma.groupMember.delete({
+      where: { id: membership.id },
+    });
+
+    const remainingMembers = await this.prisma.groupMember.count({
+      where: { groupId },
+    });
+
+    if (remainingMembers === 0) {
+      await this.prisma.group.delete({
+        where: { id: groupId },
+      });
+      return { message: 'Left group and deleted group because no members remain.' };
+    }
+
+    return { message: 'Left group successfully.' };
   }
 }

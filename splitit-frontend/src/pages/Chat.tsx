@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Send } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Header from '../components/header/Header';
 import useFriendStore from '../store/FriendStore';
 import useUserAuth from '../store/UserAuthStore';
 
@@ -46,7 +45,6 @@ function Chat() {
 
   return (
     <div className="h-screen w-screen bg-white flex flex-col overflow-hidden">
-      <Header />
 
       <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-200">
         <button onClick={() => navigate(-1)} className="text-gray-700 cursor-pointer">

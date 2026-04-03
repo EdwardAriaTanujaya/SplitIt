@@ -13,6 +13,7 @@
   --fun-color-gray: #ECECEC;
   --fun-color-error: #cc0000;
   --fun-color-secondary: #BFD8FF;
+  --fun-color-grocery: #88e119;
   /* Font */
   font-family: "Poppins", sans-serif;
 }
@@ -23,6 +24,7 @@
   --color-gray: var(--fun-color-gray);
   --color-error: var(--fun-color-error);
   --color-secondary: var(--fun-color-secondary);
+  --color-grocery: var(--fun-color-grocery);
 }
 
 body {

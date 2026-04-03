@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Delete } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { CreateExpenseDto } from './dto/create-expense.dto';
@@ -29,5 +29,11 @@ export class GroupsController {
   @Get(':groupId')
   getGroupDetail(@Param('groupId') groupId: string) {
     return this.groupsService.getGroupDetail(groupId);
+  }
+
+  // Route: DELETE http://127.0.0.1:3000/groups/:groupId/user/:userId
+  @Delete(':groupId/user/:userId')
+  leaveGroup(@Param('groupId') groupId: string, @Param('userId') userId: string) {
+    return this.groupsService.leaveGroup(groupId, userId);
   }
 }

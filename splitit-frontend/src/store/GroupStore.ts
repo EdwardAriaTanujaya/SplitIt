@@ -5,7 +5,7 @@ interface Group {
     id: string;
     name: string;
     groupImage?: string;
-    members: any[];
+    members: Array<{ user: { name: string } }>;
 }
 
 interface GroupStore {
@@ -14,6 +14,7 @@ interface GroupStore {
     error: string | null;
     fetchGroups: (userId: string) => Promise<void>;
     createGroup: (name: string, memberIds: string[], creatorId: string, groupImage?: string) => Promise<void>;
+    leaveGroup: (groupId: string, userId: string) => Promise<void>;
 }
 
 const useGroupStore = create<GroupStore>((set) => ({
@@ -40,6 +41,16 @@ const useGroupStore = create<GroupStore>((set) => ({
                 creatorId,
                 groupImage,
             }, { withCredentials: true });
+            set({ loading: false });
+        } catch (err: any) {
+            set({ error: err.message, loading: false });
+            throw err;
+        }
+    },
+    leaveGroup: async (groupId: string, userId: string) => {
+        set({ loading: true, error: null });
+        try {
+            await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/groups/${groupId}/user/${userId}`, { withCredentials: true });
             set({ loading: false });
         } catch (err: any) {
             set({ error: err.message, loading: false });

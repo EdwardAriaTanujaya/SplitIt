@@ -39,6 +39,12 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
       },
       { withCredentials: true }
     );
+
+    const token = res.data?.token;
+    if (token) {
+      localStorage.setItem('token', token);
+    }
+
     if (res.data?.user) {
       set({ user: res.data.user });
     }
@@ -46,14 +52,20 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
 
   fetchProfile: async () => {
     try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const userRes = await axios.get(
         `${API_BASE_URL}/auth/profile`,
         {
           withCredentials: true,
+          headers,
         }
       );
       const { user } = userRes.data;
-      // console.log(user);
       set({ user });
     } catch {
       set({ user: null }); // Not authenticated
@@ -68,6 +80,7 @@ const useUserAuth = create<UserAuthType>((set, get) => ({
   //remove all the user data information
   logout: async () => {
     set({ user: null });
+    localStorage.removeItem('token');
     await axios.post(
       `${API_BASE_URL}/auth/logout`,
       {},

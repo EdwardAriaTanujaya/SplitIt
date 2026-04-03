@@ -25,7 +25,7 @@ function ExpenseMain() {
   const [selectedCategory, setSelectedCategory] = useState(GROUP_CATEGORIES[0].id);
   
   const user = useUserAuth((s) => s.user);
-  const { groups, fetchGroups, createGroup, loading } = useGroupStore();
+  const { groups, fetchGroups, createGroup, leaveGroup, loading } = useGroupStore();
   const { acceptedFriends, fetchFriends } = useFriendStore();
 
   useEffect(() => {
@@ -54,6 +54,19 @@ function ExpenseMain() {
     } catch (error) {
         console.error("Failed to create group", error);
     }
+  };
+
+  const getInitials = (fullName: string) => {
+    const parts = fullName.trim().split(' ').filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const getMemberColor = () => {
+    const colors = ['var(--color-primary)', 'var(--color-error)', 'var(--color-grocery)'];
+    const randomIndex = Math.floor(Math.random() * colors.length);
+    return colors[randomIndex];
   };
 
   const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(search.toLowerCase()));
@@ -93,29 +106,68 @@ function ExpenseMain() {
           </div>
         )}
 
-        {!loading && filteredGroups.map((group) => (
-          <div key={group.id} className="rounded-3xl border border-gray-100 bg-white w-full p-4 mb-4 shadow-sm flex items-center justify-between transition-transform active:scale-95">
-             <div className="flex items-start gap-4">
+        {!loading && filteredGroups.map((group) => {
+          const groupCategoryImage = GROUP_CATEGORIES.find((category) => category.id === selectedCategory)?.image;
+          const groupImageSrc = group.groupImage || groupCategoryImage || '/GroupLogo.png';
+          const totalMembers = (group as any)._count?.members || 0;
+          const displayedMembers = group.members?.slice(0, 3) || [];
+          
+          const onLeaveGroup = async () => {
+            if (!user) return;
+            const confirmed = window.confirm(`Leave group '${group.name}'?`);
+            if (!confirmed) return;
+
+            try {
+              await leaveGroup(group.id, user.id);
+              await fetchGroups(user.id);
+            } catch (error) {
+              console.error('Failed to leave group', error);
+            }
+          };
+
+          return (
+            <div key={group.id} className="rounded-3xl border border-gray-100 bg-white w-full p-4 mb-4 shadow-sm flex items-center justify-between">
+              <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100">
-                    <img
-                      src={group.groupImage || '/GroupLogo.png'}
-                      alt="Group Icon"
-                      className="w-full h-full object-cover"
-                    />
+                  <img
+                    src={groupImageSrc}
+                    alt="Group Icon"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="pt-1">
-                    <p className="text-lg font-bold text-gray-800">{group.name}</p>
-                    <div className="flex items-center mt-1 -space-x-2">
-                        <div className="w-6 h-6 rounded-full bg-red-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-red-600">J</div>
-                        <div className="w-6 h-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-blue-600">M</div>
-                        <div className="w-6 h-6 rounded-full bg-green-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-green-600">A</div>
-                        <span className="text-[10px] text-gray-400 font-bold ml-4">{(group as any)._count?.members || 0} Members</span>
-                    </div>
+                  <p className="text-lg font-bold text-gray-800">{group.name}</p>
+                  <div className="flex items-center mt-1 -space-x-2">
+                    {displayedMembers.map((member, index) => (
+                      <div
+                        key={`${group.id}-member-${index}`}
+                        className="w-6 h-6 rounded-full  border-2 border-white flex items-center justify-center text-[10px] font-bold text-white"
+                        style={{ backgroundColor: getMemberColor() }}
+                      >
+                        {getInitials(member?.user?.name || '')}
+                      </div>
+                    ))}
+                    {totalMembers > 3 && (
+                      <div className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[10px] font-bold text-gray-700">
+                        +{totalMembers - 3}
+                      </div>
+                    )}
+                    <span className="text-[10px] text-gray-400 font-bold ml-4">{totalMembers} Members</span>
+                  </div>
                 </div>
-             </div>
-             <ChevronRight className="w-6 h-6 text-gray-900" />
-          </div>
-        ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onLeaveGroup}
+                  className="px-2 py-1 text-[15px] font-bold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer active:bg-red-100 transition shrink-0"
+                >
+                  Leave
+                </button>
+                <ChevronRight className="w-6 h-6 text-blue-900 shrink-0 transition-transform active:scale-200 cursor-pointer" />
+              </div>
+            </div>
+          );
+        })}
       </div>
      
       {/* Create Group Modal */}
