@@ -31,6 +31,18 @@ export class MessagesService {
 
     await this.ensureAcceptedFriendship(userId, friendId);
 
+    // Mark messages from friend to user as read
+    await this.prisma.message.updateMany({
+      where: {
+        senderId: friendId,
+        receiverId: userId,
+        isRead: false,
+      },
+      data: {
+        isRead: true,
+      },
+    });
+
     return this.prisma.message.findMany({
       where: {
         OR: [
@@ -56,5 +68,23 @@ export class MessagesService {
         content: data.content,
       },
     });
+  }
+
+  async getUnreadCounts(userId: string) {
+    const unreadCounts = await this.prisma.message.groupBy({
+      by: ['senderId'],
+      where: {
+        receiverId: userId,
+        isRead: false,
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    return unreadCounts.map((count) => ({
+      friendId: count.senderId,
+      unreadCount: count._count.id,
+    }));
   }
 }

@@ -14,8 +14,8 @@ export class MessagesController {
     return this.messagesService.getConversation(userId, friendId);
   }
 
-  @Post('send')
-  sendMessage(@Body() sendMessageDto: SendMessageDto) {
-    return this.messagesService.sendMessage(sendMessageDto);
+  @Get('unread/:userId')
+  getUnreadCounts(@Param('userId') userId: string) {
+    return this.messagesService.getUnreadCounts(userId);
   }
 }

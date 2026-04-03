@@ -14,7 +14,7 @@ function FriendMain() {
   
   const user = useUserAuth((s) => s.user);
   const navigate = useNavigate();
-  const { acceptedFriends, fetchFriends, sendRequest, loading } = useFriendStore();
+  const { acceptedFriends, fetchFriends, sendRequest, loading, unreadCounts } = useFriendStore();
   const filteredFriends = acceptedFriends.filter((friend) =>
     friend.friend.name.toLowerCase().includes(search.toLowerCase()) ||
     friend.friend.email.toLowerCase().includes(search.toLowerCase())
@@ -64,12 +64,22 @@ function FriendMain() {
                           <p className="text-[11px] text-gray-500">{friend.friend.email}</p>
                         </div>
                         <div className="flex flex-col items-end">
-                          <button
-                            onClick={() => navigate(`/chat/${friend.friendId}`)}
-                            className="rounded-2xl w-10 h-10 text-[var(--color-lightgray)] cursor-pointer justify-center items-center flex "
-                          >
-                          <MessageCircleMore className="w-6 h-6 inline-block"/>
-                          </button>
+                          <div className="relative">
+                            <button
+                              onClick={() => navigate(`/chat/${friend.friendId}`)}
+                              className="rounded-2xl w-10 h-10 text-[var(--color-lightgray)] cursor-pointer justify-center items-center flex "
+                            >
+                              <MessageCircleMore className="w-6 h-6 inline-block"/>
+                            </button>
+                            {(() => {
+                              const unread = unreadCounts.find(uc => uc.friendId === friend.friendId);
+                              return unread && unread.unreadCount > 0 ? (
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                  {unread.unreadCount > 99 ? '99+' : unread.unreadCount}
+                                </span>
+                              ) : null;
+                            })()}
+                          </div>
                         </div>
                       </div>
                     ))}

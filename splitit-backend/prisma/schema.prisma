@@ -83,6 +83,8 @@ model Message {
   sender   User @relation("sentMessages", fields: [senderId], references: [id])
   receiver User @relation("receivedMessages", fields: [receiverId], references: [id])
 
+  isRead    Boolean @default(false)
+
   createdAt DateTime @default(now())
 }
 

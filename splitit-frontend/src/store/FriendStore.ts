@@ -18,11 +18,13 @@ interface FriendStore {
     pendingRequests: any[];
     acceptedFriends: Friend[];
     messages: any[];
+    unreadCounts: { friendId: string; unreadCount: number }[];
     loading: boolean;
     error: string | null;
     fetchFriends: (userId: string) => Promise<void>;
     fetchNotifications: (userId: string) => Promise<void>;
     fetchConversation: (userId: string, friendId: string) => Promise<void>;
+    fetchUnreadCounts: (userId: string) => Promise<void>;
     sendMessage: (senderId: string, receiverId: string, content: string) => Promise<void>;
     sendRequest: (userId: string, friendId: string) => Promise<void>;
     respondToRequest: (userId: string, requestId: string, status: "ACCEPTED" | "DECLINED") => Promise<void>;
@@ -34,6 +36,7 @@ const useFriendStore = create<FriendStore>((set) => ({
     pendingRequests: [],
     acceptedFriends: [],
     messages: [],
+    unreadCounts: [],
     loading: false,
     error: null,
 
@@ -45,6 +48,8 @@ const useFriendStore = create<FriendStore>((set) => ({
                 axios.get(`${import.meta.env.VITE_API_BASE_URL}/friends/accepted/${userId}`, { withCredentials: true }),
             ]);
             set({ pendingRequests: pendingResponse.data, acceptedFriends: acceptedResponse.data, loading: false });
+            // Fetch unread counts after fetching friends
+            await useFriendStore.getState().fetchUnreadCounts(userId);
         } catch (err: any) {
             set({ error: err.message, loading: false });
         }
@@ -67,6 +72,15 @@ const useFriendStore = create<FriendStore>((set) => ({
             set({ messages: response.data, loading: false });
         } catch (err: any) {
             set({ error: err.message, loading: false });
+        }
+    },
+
+    fetchUnreadCounts: async (userId: string) => {
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/messages/unread/${userId}`, { withCredentials: true });
+            set({ unreadCounts: response.data });
+        } catch (err: any) {
+            console.error('Failed to fetch unread counts', err);
         }
     },
 
