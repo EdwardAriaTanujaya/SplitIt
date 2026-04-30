@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsUUID, IsOptional, IsArray } from 'class-validator';
 
 export class CreateExpenseDto {
   @IsString()
@@ -13,4 +13,12 @@ export class CreateExpenseDto {
 
   @IsUUID('4', { message: 'Payer ID must be a valid UUID' })
   payerId: string;
+
+  @IsOptional()
+  @IsArray()
+  splits?: {
+    userId: string;
+    amount: number;
+    description?: string;
+  }[];
 }

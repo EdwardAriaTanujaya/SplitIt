@@ -110,13 +110,30 @@ export class GroupsService {
       throw new BadRequestException(`User with ID ${data.payerId} is not a member of this group!`);
     }
 
-    // 3. Save the expense data
+    // 3. Save the expense data with per-item splits
     const expense = await this.prisma.expense.create({
       data: {
         title: data.title,
         amount: data.amount,
         groupId: data.groupId,
         payerId: data.payerId,
+        ...(data.splits && data.splits.length > 0
+          ? {
+              splits: {
+                create: data.splits.map((split) => ({
+                  userId: split.userId,
+                  amount: split.amount,
+                  description: split.description || null,
+                })),
+              },
+            }
+          : {}),
+      },
+      include: {
+        splits: {
+          include: { user: { select: { id: true, name: true } } },
+        },
+        payer: { select: { id: true, name: true } },
       },
     });
 
@@ -149,5 +166,35 @@ export class GroupsService {
     }
 
     return { message: 'Left group successfully.' };
+  }
+
+  // FUNCTION 6: ADD MEMBERS TO EXISTING GROUP
+  async addMembers(groupId: string, memberIds: string[]) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      include: { members: true },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    // Filter out users who are already members
+    const existingUserIds = group.members.map(m => m.userId);
+    const newMemberIds = memberIds.filter(id => !existingUserIds.includes(id));
+
+    if (newMemberIds.length === 0) {
+      return { message: 'All selected users are already members of this group.' };
+    }
+
+    // Add new members
+    await this.prisma.groupMember.createMany({
+      data: newMemberIds.map(userId => ({
+        userId,
+        groupId,
+      })),
+    });
+
+    return { message: `${newMemberIds.length} member(s) added successfully!` };
   }
 }

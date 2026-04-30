@@ -36,4 +36,13 @@ export class GroupsController {
   leaveGroup(@Param('groupId') groupId: string, @Param('userId') userId: string) {
     return this.groupsService.leaveGroup(groupId, userId);
   }
+
+  // Route: POST http://127.0.0.1:3000/groups/:groupId/members
+  @Post(':groupId/members')
+  addMembers(
+    @Param('groupId') groupId: string,
+    @Body('memberIds') memberIds: string[],
+  ) {
+    return this.groupsService.addMembers(groupId, memberIds);
+  }
 }

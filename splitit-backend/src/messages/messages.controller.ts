@@ -6,6 +6,11 @@ import { SendMessageDto } from './dto/send-message.dto';
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
+  @Post('send')
+  sendMessage(@Body() sendMessageDto: SendMessageDto) {
+    return this.messagesService.sendMessage(sendMessageDto);
+  }
+
   @Get('conversation/:userId/:friendId')
   getConversation(
     @Param('userId') userId: string,

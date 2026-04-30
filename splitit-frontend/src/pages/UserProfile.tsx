@@ -1,12 +1,12 @@
-import { UserRound, UsersRound, LogOut } from "lucide-react";
+import { UserRound, LogOut } from "lucide-react";
 import {
-  BanknotesIcon,
   CheckIcon,
   ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
 import Header from "../components/header/Header";
+import BottomNav from "../components/navigation/BottomNav";
 import useUserAuth from "../store/UserAuthStore";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 function UserProfile() {
@@ -76,29 +76,7 @@ function UserProfile() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white h-16 w-screen border-t border-gray-200 flex flex-row z-40">
-        <Link
-          className="flex flex-col flex-1 items-center justify-center"
-          to="/expense"
-        >
-          <BanknotesIcon className="w-6 h-6 text-gray-400" />
-          <p className="text-[10px] text-gray-400 font-bold">Expenses</p>
-        </Link>
-        <Link
-          className="flex flex-col flex-1 items-center justify-center"
-          to="/friends"
-        >
-          <UsersRound className="w-6 h-6 text-gray-400" />
-          <p className="text-[10px] text-gray-400 font-bold">Friends</p>
-        </Link>
-        <Link
-          className="flex flex-col flex-1 items-center justify-center"
-          to="/profile"
-        >
-          <UserRound className="w-6 h-6 text-blue-600" />
-          <p className="text-[10px] text-blue-600 font-bold">Profile</p>
-        </Link>
-      </div>
+      <BottomNav />
     </div>
   );
 }

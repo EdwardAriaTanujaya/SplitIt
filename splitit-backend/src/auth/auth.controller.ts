@@ -33,7 +33,7 @@ export class AuthController {
     response.cookie('token', token, {
       httpOnly: true,
       secure: false, // Set true in production HTTPS
-      sameSite: 'none',
+      sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24, // 24 hours as requested
     });
 
@@ -41,7 +41,7 @@ export class AuthController {
     response.cookie('userId', result.user.id, {
       httpOnly: true,
       secure: false,
-      sameSite: 'none',
+      sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24, // also 24 hours
     });
 

@@ -1,18 +1,22 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import type { PoolConfig } from 'pg';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
-    // Use a pool config to avoid mismatched Pool types between packages
-    const poolConfig: PoolConfig = {
-      connectionString: process.env.DATABASE_URL,
-    };
-    const adapter = new PrismaPg(poolConfig);
+    // Parse the DATABASE_URL to extract connection details
+    const dbUrl = process.env.DATABASE_URL || 'mysql://root@localhost:3306/splitit_db';
+    const url = new URL(dbUrl);
 
-    // Pass the adapter to the PrismaClient constructor
+    const adapter = new PrismaMariaDb({
+      host: url.hostname,
+      port: parseInt(url.port) || 3306,
+      user: url.username,
+      password: url.password || undefined,
+      database: url.pathname.slice(1), // Remove leading '/'
+    });
+
     super({ adapter });
   }
 

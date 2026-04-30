@@ -1,12 +1,12 @@
-import { UserRound, UsersRound, ChevronRight, X, Plus } from "lucide-react";
+import { ChevronRight, X, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { BanknotesIcon } from "@heroicons/react/24/outline";
+import { useNavigate } from "react-router-dom";
 import HeaderTagline from "../components/header/HeaderTagline";
 import Header from "../components/header/Header";
 import useGroupStore from "../store/GroupStore";
 import useUserAuth from "../store/UserAuthStore";
 import useFriendStore from "../store/FriendStore";
+import BottomNav from "../components/navigation/BottomNav";
 
 const GROUP_CATEGORIES = [
   { id: 'food', label: 'Food', image: '/food.svg' },
@@ -21,9 +21,13 @@ function ExpenseMain() {
   const [modalStep, setModalStep] = useState<1 | 2>(1);
   const [friendSearch, setFriendSearch] = useState<string>("");
   const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupDesc, setNewGroupDesc] = useState("");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(GROUP_CATEGORIES[0].id);
+  const [leaveConfirm, setLeaveConfirm] = useState<{ groupId: string; groupName: string } | null>(null);
+  const [leaveLoading, setLeaveLoading] = useState(false);
   
+  const navigate = useNavigate();
   const user = useUserAuth((s) => s.user);
   const { groups, fetchGroups, createGroup, leaveGroup, loading } = useGroupStore();
   const { acceptedFriends, fetchFriends } = useFriendStore();
@@ -48,6 +52,7 @@ function ExpenseMain() {
         setShowCreateModal(false);
         setFriendSearch("");
         setNewGroupName("");
+        setNewGroupDesc("");
         setSelectedMemberIds([]);
         setSelectedCategory(GROUP_CATEGORIES[0].id);
         fetchGroups(user.id);
@@ -63,10 +68,9 @@ function ExpenseMain() {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const getMemberColor = () => {
-    const colors = ['var(--color-primary)', 'var(--color-error)', 'var(--color-grocery)'];
-    const randomIndex = Math.floor(Math.random() * colors.length);
-    return colors[randomIndex];
+  const MEMBER_COLORS = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+  const getMemberColor = (index: number) => {
+    return MEMBER_COLORS[index % MEMBER_COLORS.length];
   };
 
   const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(search.toLowerCase()));
@@ -80,15 +84,19 @@ function ExpenseMain() {
       <Header />
 
       <HeaderTagline
-        title="Your Groups"
-        subtitle="Manage your groups and expenses"
+        title="Your Group"
+        subtitle="Track shared expenses with friends"
         onChange={setSearch}
         value={search}
-        placeholder="Search groups"
+        placeholder="Search Group"
       />
 
-      <div className="flex-1 overflow-y-auto px-4 pb-20 mt-4">
-        {loading && <p className="text-center">Loading groups...</p>}
+      <div className="flex-1 overflow-y-auto px-4 pb-24 mt-4">
+        {loading && (
+          <div className="flex items-center justify-center py-10">
+            <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
         
         {!loading && filteredGroups.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full mt-[-50px]">
@@ -107,211 +115,239 @@ function ExpenseMain() {
         )}
 
         {!loading && filteredGroups.map((group) => {
-          const groupCategoryImage = GROUP_CATEGORIES.find((category) => category.id === selectedCategory)?.image;
-          const groupImageSrc = group.groupImage || groupCategoryImage || '/GroupLogo.png';
-          const totalMembers = (group as any)._count?.members || 0;
+          const groupImageSrc = group.groupImage || '/GroupLogo.png';
+          const totalMembers = (group as any)._count?.members || group.members?.length || 0;
           const displayedMembers = group.members?.slice(0, 3) || [];
           
-          const onLeaveGroup = async () => {
-            if (!user) return;
-            const confirmed = window.confirm(`Leave group '${group.name}'?`);
-            if (!confirmed) return;
-
-            try {
-              await leaveGroup(group.id, user.id);
-              await fetchGroups(user.id);
-            } catch (error) {
-              console.error('Failed to leave group', error);
-            }
-          };
-
           return (
-            <div key={group.id} className="rounded-3xl border border-gray-100 bg-white w-full p-4 mb-4 shadow-sm flex items-center justify-between">
-              <div className="flex items-start gap-4">
-                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100">
+            <div
+              key={group.id}
+              className="rounded-2xl border border-gray-200 bg-white w-full p-4 mb-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => navigate(`/group/${group.id}`)}
+            >
+              <div className="flex items-center gap-3">
+                {/* Group Image */}
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
                   <img
                     src={groupImageSrc}
                     alt="Group Icon"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="pt-1">
-                  <p className="text-lg font-bold text-gray-800">{group.name}</p>
-                  <div className="flex items-center mt-1 -space-x-2">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">{group.name}</p>
+                  {/* Member Avatars */}
+                  <div className="flex items-center mt-1 -space-x-1.5">
                     {displayedMembers.map((member, index) => (
                       <div
                         key={`${group.id}-member-${index}`}
-                        className="w-6 h-6 rounded-full  border-2 border-white flex items-center justify-center text-[10px] font-bold text-white"
-                        style={{ backgroundColor: getMemberColor() }}
+                        className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white"
+                        style={{ backgroundColor: getMemberColor(index) }}
                       >
                         {getInitials(member?.user?.name || '')}
                       </div>
                     ))}
                     {totalMembers > 3 && (
-                      <div className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[10px] font-bold text-gray-700">
+                      <div className="w-5 h-5 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center text-[8px] font-bold text-gray-700">
                         +{totalMembers - 3}
                       </div>
                     )}
-                    <span className="text-[10px] text-gray-400 font-bold ml-4">{totalMembers} Members</span>
+                    <span className="text-[10px] text-gray-400 font-medium ml-3">
+                      {totalMembers} Members
+                    </span>
                   </div>
                 </div>
               </div>
+
               <div className="flex items-center gap-2">
                 <button
-                  onClick={onLeaveGroup}
-                  className="px-2 py-1 text-[15px] font-bold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer active:bg-red-100 transition shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLeaveConfirm({ groupId: group.id, groupName: group.name });
+                  }}
+                  className="px-2.5 py-1 text-xs font-bold text-red-500 border border-red-200 rounded-lg hover:bg-red-50 cursor-pointer active:bg-red-100 transition shrink-0"
                 >
                   Leave
                 </button>
-                <ChevronRight className="w-6 h-6 text-blue-900 shrink-0 transition-transform active:scale-200 cursor-pointer" />
+                <ChevronRight className="w-5 h-5 text-gray-400 shrink-0" />
               </div>
             </div>
           );
         })}
       </div>
      
-      {/* Create Group Modal */}
+      {/* Create Group Modal — Step 1: Group Name & Description */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl relative">
-            <button onClick={() => setShowCreateModal(false)} className="absolute top-4 right-4 text-gray-400 cursor-pointer">
+            <button onClick={() => setShowCreateModal(false)} className="absolute top-4 right-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors">
               <X className="w-6 h-6" />
             </button>
 
             <div className="flex flex-col items-center mb-6">
-              <img src="/Groups.png" alt="Group Logo" className="w-12 h-12 mb-4" />
+              <img src="/Groups.png" alt="Group Logo" className="w-14 h-14 mb-3" />
               {modalStep === 1 ? (
                 <>
-                  <h2 className="text-xl font-bold">Add Your Friends</h2>
-                  <p className="text-sm text-gray-500 text-center">Select friends to add to your group</p>
+                  <h2 className="text-xl font-bold text-gray-900">Create New Group</h2>
+                  <p className="text-sm text-gray-500 text-center">Start tracking expenses with your friends</p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-xl font-bold">Name Your Group</h2>
-                  <p className="text-sm text-gray-500 text-center">Give your group a name and create it</p>
+                  <h2 className="text-xl font-bold text-gray-900">Add your friends</h2>
+                  <p className="text-sm text-gray-500 text-center">Use the search bar to find your friends easily</p>
                 </>
               )}
             </div>
 
             <div className="space-y-4">
               {modalStep === 1 ? (
-                <div>
-                  <p className="text-xs font-bold text-gray-400 mb-2">SEARCH CONNECTED FRIENDS</p>
-                  <input
-                    value={friendSearch}
-                    onChange={(e) => setFriendSearch(e.target.value)}
-                    placeholder="Search friend name or email"
-                    className="w-full bg-gray-100 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 mb-3"
-                  />
-                  <p className="text-xs text-gray-500 mb-2">Select one or more friends first, then continue.</p>
-
-                  {acceptedFriends.length === 0 ? (
-                    <p className="text-sm text-[var(--color-error)]">You have no accepted friends yet. Invite friends first to add them to groups.</p>
-                  ) : filteredFriends.length === 0 ? (
-                    <p className="text-sm text-gray-500">No connected friends match your search.</p>
-                  ) : (
-                    <div className="space-y-2 max-h-44 overflow-y-auto">
-                      {filteredFriends.map((friend) => (
-                        <label key={friend.friendId} className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-gray-200 bg-gray-50 cursor-pointer">
-                          <div>
-                            <p className="font-bold text-gray-800">{friend.friend.name}</p>
-                            <p className="text-[11px] text-gray-500">{friend.friend.email}</p>
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={selectedMemberIds.includes(friend.friendId)}
-                            onChange={() => {
-                              setSelectedMemberIds((current) =>
-                                current.includes(friend.friendId)
-                                  ? current.filter((id) => id !== friend.friendId)
-                                  : [...current, friend.friendId]
-                              );
-                            }}
-                          />
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
                 <div className="space-y-4">
-                  <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-                    <p className="text-xs font-bold text-gray-500 mb-2">Selected Friends</p>
-                    <div className="space-y-2 max-h-36 overflow-y-auto">
-                      {acceptedFriends
-                        .filter((friend) => selectedMemberIds.includes(friend.friendId))
-                        .map((friend) => (
-                          <div key={friend.friendId} className="rounded-2xl bg-white p-3 border border-gray-200">
-                            <p className="font-bold text-gray-800">{friend.friend.name}</p>
-                            <p className="text-[11px] text-gray-500">{friend.friend.email}</p>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-
                   <div>
-                    <label className="text-xs font-bold text-gray-400 block mb-1">GROUP NAME</label>
+                    <p className="text-xs font-bold text-gray-500 mb-1.5">Group Name</p>
                     <input
                       value={newGroupName}
                       onChange={(e) => setNewGroupName(e.target.value)}
-                      placeholder="e.g., KFC Party Part 2"
-                      className="w-full bg-gray-100 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., KFC Party part 2"
+                      className="w-full bg-gray-100 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 mb-1.5">Group Description</p>
+                    <textarea
+                      value={newGroupDesc}
+                      onChange={(e) => setNewGroupDesc(e.target.value)}
+                      placeholder="e.g. For our trip to KFC Again!"
+                      rows={3}
+                      className="w-full bg-gray-100 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
                     />
                   </div>
 
+                  {/* Category Selector */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-bold text-gray-400">CATEGORY</p>
-                      <p className="text-[11px] text-gray-500">Choose an icon for the group.</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <p className="text-xs font-bold text-gray-500 mb-1.5">Category</p>
+                    <div className="grid grid-cols-2 gap-2">
                       {GROUP_CATEGORIES.map((category) => (
                         <button
                           key={category.id}
                           type="button"
                           onClick={() => setSelectedCategory(category.id)}
-                          className={`flex items-center gap-3 p-3 rounded-2xl border cursor-pointer ${selectedCategory === category.id ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-gray-100'} transition`}
+                          className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer text-sm ${selectedCategory === category.id ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-gray-50'} transition`}
                         >
-                          <img src={category.image} alt={category.label} className="w-8 h-8" />
-                          <span className="text-sm font-bold text-gray-700">{category.label}</span>
+                          <img src={category.image} alt={category.label} className="w-6 h-6" />
+                          <span className="font-medium text-gray-700">{category.label}</span>
                         </button>
                       ))}
                     </div>
                   </div>
                 </div>
+              ) : (
+                <div>
+                  <p className="text-xs font-bold text-gray-500 mb-1.5">Search Member</p>
+                  <div className="relative">
+                    <input
+                      value={friendSearch}
+                      onChange={(e) => setFriendSearch(e.target.value)}
+                      placeholder="Search Friend"
+                      className="w-full bg-gray-100 rounded-lg p-3 pr-9 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                    <div className="absolute inset-y-0 right-3 flex items-center">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                  </div>
+
+                  {/* Added Friends (selected) */}
+                  {selectedMemberIds.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs font-bold text-gray-500 mb-1.5">Added Friends</p>
+                      <div className="flex items-center gap-1.5">
+                        {acceptedFriends
+                          .filter((f) => selectedMemberIds.includes(f.friendId))
+                          .map((f, idx) => (
+                            <div
+                              key={f.friendId}
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                              style={{ backgroundColor: getMemberColor(idx) }}
+                            >
+                              {getInitials(f.friend.name)}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Friend List */}
+                  <div className="mt-3">
+                    <p className="text-xs font-bold text-gray-500 mb-1.5">Add Friends</p>
+                    {acceptedFriends.length === 0 ? (
+                      <p className="text-sm text-red-500">You have no accepted friends yet. Invite friends first.</p>
+                    ) : filteredFriends.length === 0 ? (
+                      <p className="text-sm text-gray-500">No friends match your search.</p>
+                    ) : (
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {filteredFriends.map((friend, idx) => (
+                          <label
+                            key={friend.friendId}
+                            className={`flex items-center justify-between gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                              selectedMemberIds.includes(friend.friendId) 
+                                ? 'border-blue-500 bg-blue-50' 
+                                : 'border-gray-200 bg-white hover:bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                                style={{ backgroundColor: getMemberColor(idx) }}
+                              >
+                                {getInitials(friend.friend.name)}
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-800 text-sm">{friend.friend.name}</p>
+                                <p className="text-[11px] text-gray-500">{friend.friend.email}</p>
+                              </div>
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={selectedMemberIds.includes(friend.friendId)}
+                              onChange={() => {
+                                setSelectedMemberIds((current) =>
+                                  current.includes(friend.friendId)
+                                    ? current.filter((id) => id !== friend.friendId)
+                                    : [...current, friend.friendId]
+                                );
+                              }}
+                              className="w-4 h-4 accent-blue-600"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 cursor-pointer active:bg-gray-50 cursor-pointer"
+                  className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 cursor-pointer active:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 {modalStep === 1 ? (
                   <button
                     onClick={() => setModalStep(2)}
-                    disabled={selectedMemberIds.length === 0}
-                    className="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-white shadow-lg shadow-blue-200 cursor-pointer active:bg-blue-700 disabled:opacity-50 cursor-pointer"
+                    disabled={newGroupName.trim().length === 0}
+                    className="flex-1 py-3 bg-[var(--fun-color-primary)] rounded-xl font-bold text-white active:brightness-90 disabled:opacity-50 cursor-pointer transition-all"
                   >
                     Next
                   </button>
                 ) : (
-                  <>
-                    <button
-                      onClick={() => setModalStep(1)}
-                      className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 active:bg-gray-50 cursor-pointer"
-                    >
-                      Back
-                    </button>
-                    <button
-                      onClick={handleCreateGroup}
-                      disabled={newGroupName.trim().length === 0}
-                      className="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-white shadow-lg shadow-blue-200 active:bg-blue-700 disabled:opacity-50 cursor-pointer"
-                    >
-                      Create
-                    </button>
-                  </>
+                  <button
+                    onClick={handleCreateGroup}
+                    disabled={selectedMemberIds.length === 0}
+                    className="flex-1 py-3 bg-[var(--fun-color-primary)] rounded-xl font-bold text-white active:brightness-90 disabled:opacity-50 cursor-pointer transition-all"
+                  >
+                    Create Group
+                  </button>
                 )}
               </div>
             </div>
@@ -319,38 +355,70 @@ function ExpenseMain() {
         </div>
       )}
 
-      {/* Floating Plus Button */}
-      <div className="fixed bottom-20 right-6 z-40">
+      {/* Leave Group Confirmation Modal */}
+      {leaveConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-xs p-6 shadow-xl text-center">
+            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <X className="w-7 h-7 text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Leave Group?</h3>
+            <p className="text-sm text-gray-500 mb-6">
+              Are you sure you want to leave <span className="font-bold text-gray-700">"{leaveConfirm.groupName}"</span>?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setLeaveConfirm(null)}
+                disabled={leaveLoading}
+                className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 cursor-pointer active:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!user) return;
+                  setLeaveLoading(true);
+                  try {
+                    await leaveGroup(leaveConfirm.groupId, user.id);
+                    setLeaveConfirm(null);
+                  } catch (error) {
+                    console.error('Failed to leave group', error);
+                    alert('Failed to leave group. Please try again.');
+                  } finally {
+                    setLeaveLoading(false);
+                  }
+                }}
+                disabled={leaveLoading}
+                className="flex-1 py-3 bg-red-500 rounded-xl font-bold text-white cursor-pointer active:bg-red-600 disabled:opacity-50 transition-colors"
+              >
+                {leaveLoading ? 'Leaving...' : 'Leave'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Create Group Button */}
+      <div className="fixed bottom-20 right-4 z-40 flex items-center gap-2">
+        <span className="text-xs font-bold text-gray-500">Create a new group</span>
         <button 
             onClick={() => {
               setModalStep(1);
               setFriendSearch("");
               setNewGroupName("");
+              setNewGroupDesc("");
               setSelectedMemberIds([]);
               setSelectedCategory(GROUP_CATEGORIES[0].id);
               setShowCreateModal(true);
             }}
-            className="bg-blue-600 rounded-full w-14 h-14 flex justify-center items-center shadow-lg shadow-blue-200 active:scale-90 transition-transform cursor-pointer"
+            className="bg-[var(--fun-color-primary)] rounded-full w-12 h-12 flex justify-center items-center shadow-lg active:scale-90 transition-transform cursor-pointer"
         >
-          <Plus className="text-white w-8 h-8"></Plus>
+          <Plus className="text-white w-6 h-6" />
         </button>
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white h-16 w-screen border-t border-gray-200 flex flex-row z-40">
-        <Link className="flex flex-col flex-1 items-center justify-center" to="/expense">
-          <BanknotesIcon className="w-6 h-6 text-blue-600" />
-          <p className="text-[10px] text-blue-600 font-bold">Expenses</p>
-        </Link>
-        <Link className="flex flex-col flex-1 items-center justify-center" to="/friends">
-          <UsersRound className="w-6 h-6 text-gray-400" />
-          <p className="text-[10px] text-gray-400 font-bold">Friends</p>
-        </Link>
-        <Link className="flex flex-col flex-1 items-center justify-center" to="/profile">
-          <UserRound className="w-6 h-6 text-gray-400" />
-          <p className="text-[10px] text-gray-400 font-bold">Profile</p>
-        </Link>  
-      </div>
+      <BottomNav />
 
     </div>
   );

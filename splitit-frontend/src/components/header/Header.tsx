@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Bell, UserRound } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell } from "lucide-react";
 import useFriendStore from "../../store/FriendStore";
 import useUserAuth from "../../store/UserAuthStore";
 
@@ -37,9 +37,6 @@ function Header(){
               </span>
             )}
           </button>
-          <Link to="/profile" className="w-[31px] h-[31px] bg-[var(--color-gray)] rounded-full flex justify-center items-center cursor-pointer">
-            <UserRound className="text-black w-4 h-4" strokeWidth={2.5} />
-          </Link>
         </div>
       </div>
     )

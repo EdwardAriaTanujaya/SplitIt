@@ -5,6 +5,7 @@ import { ProtectedRoute } from "./route/ProtectedRoute";
 import UserRegister from "./pages/auth/UserRegister";
 import UserLogin from "./pages/auth/UserLogin";
 import ExpenseMain from "./pages/ExpenseMain";
+import GroupDetail from "./pages/GroupDetail";
 import FriendMain from "./pages/FriendMain";
 import UserProfile from "./pages/UserProfile";
 import Notification from "./pages/Notification";
@@ -30,6 +31,7 @@ function App() {
 
             <Route element={<ProtectedRoute />}>
                 <Route path="/expense" element={<ExpenseMain />} />
+                <Route path="/group/:groupId" element={<GroupDetail />} />
                 <Route path="/friends" element={<FriendMain />} />
                 <Route path="/chat/:friendId" element={<Chat />} />
                 <Route path="/profile" element={<UserProfile />} />

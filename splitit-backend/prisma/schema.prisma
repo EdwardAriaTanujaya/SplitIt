@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 // 1. Model User: Menyimpan data pengguna aplikasi.
@@ -25,6 +25,7 @@ model User {
   sentMessages     Message[]     @relation("sentMessages")
   receivedMessages Message[]     @relation("receivedMessages")
   expensesPaid     Expense[]     // <-- Tambahan relasi agar tahu user ini bayar tagihan apa aja
+  expenseSplits    ExpenseSplit[] // <-- Item-item yang dipesan user ini
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -91,12 +92,25 @@ model Message {
 // 6. Model Expense: Menyimpan data tagihan (TAMBAHAN BARU)
 model Expense {
   id          String   @id @default(uuid())
-  title       String   // Contoh: "Ayam KFC 2 Bucket"
-  amount      Float    // Contoh: 250000
+  title       String   // Contoh: "KFC Lunch"
+  amount      Float    // Total bill amount
   groupId     String
-  payerId     String   // Mencatat siapa yang bayarin duluan
+  payerId     String   // Siapa yang bayar duluan
   createdAt   DateTime @default(now())
 
-  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  payer       User     @relation(fields: [payerId], references: [id])
+  group       Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  payer       User           @relation(fields: [payerId], references: [id])
+  splits      ExpenseSplit[] // Per-item split for each member
+}
+
+// 7. Model ExpenseSplit: Menyimpan item per-orang (siapa pesan apa)
+model ExpenseSplit {
+  id          String   @id @default(uuid())
+  expenseId   String
+  userId      String
+  amount      Float    // How much this person owes
+  description String?  // What they ordered (e.g., "Chicken + Coca Cola")
+
+  expense     Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
 }

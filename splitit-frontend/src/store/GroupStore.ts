@@ -17,7 +17,7 @@ interface GroupStore {
     leaveGroup: (groupId: string, userId: string) => Promise<void>;
 }
 
-const useGroupStore = create<GroupStore>((set) => ({
+const useGroupStore = create<GroupStore>((set, get) => ({
     groups: [],
     loading: false,
     error: null,
@@ -47,11 +47,17 @@ const useGroupStore = create<GroupStore>((set) => ({
             throw err;
         }
     },
+
     leaveGroup: async (groupId: string, userId: string) => {
         set({ loading: true, error: null });
         try {
             await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/groups/${groupId}/user/${userId}`, { withCredentials: true });
-            set({ loading: false });
+            // Remove group from local state immediately so UI updates without needing a refetch
+            const currentGroups = get().groups;
+            set({
+                groups: currentGroups.filter(g => g.id !== groupId),
+                loading: false,
+            });
         } catch (err: any) {
             set({ error: err.message, loading: false });
             throw err;

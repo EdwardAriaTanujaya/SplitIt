@@ -1,9 +1,10 @@
-import { UserRound, UsersRound, Plus, X, UserRoundPlus, MessageCircleMore } from "lucide-react";
-import { BanknotesIcon } from "@heroicons/react/24/outline";
+import { Plus, X, UserRoundPlus, MessageCircleMore } from "lucide-react";
+
 import HeaderTagline from "../components/header/HeaderTagline";
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/header/Header";
+import BottomNav from "../components/navigation/BottomNav";
 import useFriendStore from "../store/FriendStore";
 import useUserAuth from "../store/UserAuthStore";
 
@@ -38,6 +39,15 @@ function FriendMain() {
     }
   };
 
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(' ').filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const AVATAR_COLORS = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+
   return (
     <div className="h-screen w-screen bg-white flex flex-col overflow-hidden">
         <Header />
@@ -47,44 +57,55 @@ function FriendMain() {
           subtitle="Manage your friends and remind them"
           onChange={setSearch}
           value={search}
-          placeholder="Search friends"
+          placeholder="Search a friend"
         />
 
-        <div className="flex-1 overflow-y-auto px-4 pb-20 mt-4">
-            {loading && <p className="text-center text-sm text-gray-500">Loading friends...</p>}
+        <div className="flex-1 overflow-y-auto px-4 pb-24 mt-4">
+            {loading && (
+              <div className="flex items-center justify-center py-10">
+                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
 
             {!loading && filteredFriends.length > 0 && (
-              <div className="space-y-4">
-                <div className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
-                  <div className="space-y-3">
-                    {filteredFriends.map((friend) => (
-                      <div key={friend.friendId} className="flex items-center justify-between gap-4">
+              <div className="space-y-2">
+                {filteredFriends.map((friend, idx) => {
+                  const unread = unreadCounts.find(uc => uc.friendId === friend.friendId);
+                  const hasUnread = unread && unread.unreadCount > 0;
+                  return (
+                    <div
+                      key={friend.friendId}
+                      className="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Avatar */}
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                          style={{ backgroundColor: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}
+                        >
+                          {getInitials(friend.friend.name)}
+                        </div>
                         <div>
-                          <p className="font-bold text-gray-800">{friend.friend.name}</p>
+                          <p className="font-bold text-gray-900 text-sm">{friend.friend.name}</p>
                           <p className="text-[11px] text-gray-500">{friend.friend.email}</p>
                         </div>
-                        <div className="flex flex-col items-end">
-                          <div className="relative">
-                            <button
-                              onClick={() => navigate(`/chat/${friend.friendId}`)}
-                              className="rounded-2xl w-10 h-10 text-[var(--color-lightgray)] cursor-pointer justify-center items-center flex "
-                            >
-                              <MessageCircleMore className="w-6 h-6 inline-block"/>
-                            </button>
-                            {(() => {
-                              const unread = unreadCounts.find(uc => uc.friendId === friend.friendId);
-                              return unread && unread.unreadCount > 0 ? (
-                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                  {unread.unreadCount > 99 ? '99+' : unread.unreadCount}
-                                </span>
-                              ) : null;
-                            })()}
-                          </div>
-                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div className="relative">
+                        <button
+                          onClick={() => navigate(`/chat/${friend.friendId}`)}
+                          className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+                        >
+                          <MessageCircleMore className="w-5 h-5 text-gray-600"/>
+                        </button>
+                        {hasUnread && (
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
+                            {unread!.unreadCount > 9 ? '9+' : unread!.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -109,29 +130,29 @@ function FriendMain() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl relative">
-                <button onClick={() => setShowAddModal(false)} className="absolute top-4 right-4 text-gray-400 cursor-pointer">
+                <button onClick={() => setShowAddModal(false)} className="absolute top-4 right-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors">
                     <X className="w-6 h-6" />
                 </button>
                 <div className="flex flex-col items-center mb-6">
                     <UserRoundPlus className="w-12 h-12 text-blue-600 mb-2" />
-                    <h2 className="text-xl font-bold">Add New Friend</h2>
-                    <p className="text-sm text-gray-500 text-center">Enter your friend's ID to connect</p>
+                    <h2 className="text-xl font-bold text-gray-900">Add New Friend</h2>
+                    <p className="text-sm text-gray-500 text-center">Enter your friend's email or name to connect</p>
                 </div>
                 
                 <div className="space-y-4">
                     <div>
-                        <label className="text-xs font-bold text-gray-400 block mb-1">USER ID</label>
+                        <label className="text-xs font-bold text-gray-500 block mb-1.5">FRIEND EMAIL OR NAME</label>
                         <input 
                             value={friendIdInput}
                             onChange={(e) => setFriendIdInput(e.target.value)}
-                            placeholder="Paste friend ID here" 
-                            className="w-full bg-gray-100 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter email or name" 
+                            className="w-full bg-gray-100 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                         />
                     </div>
                     
                     <button 
                         onClick={handleSendRequest}
-                        className="w-full py-3 bg-blue-600 rounded-xl font-bold text-white shadow-lg shadow-blue-200 active:bg-blue-700 mt-2 cursor-pointer transition-colors"
+                        className="w-full py-3 bg-[var(--fun-color-primary)] rounded-xl font-bold text-white active:brightness-90 mt-2 cursor-pointer transition-all"
                     >
                         Send Request
                     </button>
@@ -141,45 +162,18 @@ function FriendMain() {
       )}
 
       {/* Floating Button */}
-      <div className="fixed bottom-20 right-6 z-40">
+      <div className="fixed bottom-20 right-4 z-40 flex items-center gap-2">
+        <span className="text-xs font-bold text-gray-500">Add a new friend</span>
         <button 
             onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 rounded-full w-14 h-14 flex justify-center items-center shadow-lg shadow-blue-200 active:scale-90 transition-transform cursor-pointer"
+            className="bg-[var(--fun-color-primary)] rounded-full w-12 h-12 flex justify-center items-center shadow-lg active:scale-90 transition-transform cursor-pointer"
         >
-          <Plus className="text-white w-8 h-8"></Plus>
+          <Plus className="text-white w-6 h-6" />
         </button>
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white h-16 w-screen border-t border-gray-200 flex flex-row z-40">
-        <Link
-          className="flex flex-col flex-1 items-center justify-center"
-          to="/expense"
-        >
-          <BanknotesIcon className="w-6 h-6 text-gray-400" />
-          <p className="text-[10px] text-gray-400 font-bold">
-            Expenses
-          </p>
-        </Link>
-        <Link
-          className="flex flex-col flex-1 items-center justify-center"
-          to="/friends"
-        >
-          <UsersRound className="w-6 h-6 text-blue-600" />
-          <p className="text-[10px] text-blue-600 font-bold">
-            Friends
-          </p>
-        </Link>
-        <Link
-          className="flex flex-col flex-1 items-center justify-center"
-          to="/profile"
-        >
-          <UserRound className="w-6 h-6 text-gray-400" />
-          <p className="text-[10px] text-gray-400 font-bold">
-            Profile
-          </p>
-        </Link>
-      </div>
+      <BottomNav />
     </div>
   );
 }

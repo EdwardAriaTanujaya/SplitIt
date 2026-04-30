@@ -66,12 +66,11 @@ const useFriendStore = create<FriendStore>((set) => ({
     },
 
     fetchConversation: async (userId: string, friendId: string) => {
-        set({ loading: true, error: null });
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/messages/conversation/${userId}/${friendId}`, { withCredentials: true });
-            set({ messages: response.data, loading: false });
+            set({ messages: response.data });
         } catch (err: any) {
-            set({ error: err.message, loading: false });
+            set({ error: err.message });
         }
     },
 
@@ -85,16 +84,14 @@ const useFriendStore = create<FriendStore>((set) => ({
     },
 
     sendMessage: async (senderId: string, receiverId: string, content: string) => {
-        set({ loading: true, error: null });
         try {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/messages/send`, {
                 senderId,
                 receiverId,
                 content,
             }, { withCredentials: true });
-            set({ loading: false });
         } catch (err: any) {
-            set({ error: err.message, loading: false });
+            set({ error: err.message });
             throw err;
         }
     },
